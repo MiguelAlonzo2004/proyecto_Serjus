@@ -11,6 +11,9 @@ from .views import (
 )
 from .viewspersonalizadas import  login_usuario  
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 router = routers.DefaultRouter()
 router.register(r'criterioevaluacion', CriterioevaluacionViewSet)
 router.register(r'pueblocultura', PuebloViewSet)
@@ -40,3 +43,6 @@ urlpatterns = [
     path('', include(router.urls)),  
     path('login/', login_usuario),   
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -132,19 +132,29 @@ class Criterioevaluacion(models.Model):
         db_table = 'criterioevaluacion'
 
 
-class Documento(models.Model): #YA
-    iddocumento = models.AutoField(db_column='idDocumento', primary_key=True)  # Field name made lowercase.
-    idtipodocumento = models.ForeignKey('Tipodocumento', models.DO_NOTHING, db_column='idTipoDocumento', blank=True, null=True)  # Field name made lowercase.
-    archivo = models.TextField()
-    nombrearchivo = models.CharField(db_column='nombreArchivo', max_length=150)  # Field name made lowercase.
-    mimearchivo = models.CharField(db_column='mimeArchivo', max_length=10)  # Field name made lowercase.
-    fechasubida = models.DateField(db_column='fechaSubida')  # Field name made lowercase.
-    estado = models.BooleanField(default=True)  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
-    createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
-    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
-    idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, db_column='idEmpleado', blank=True, null=True)  # Field name made lowercase.
+import os
+from django.conf import settings
 
+def upload_document_path(instance, filename):
+    # Carpeta por empleado + tipo de documento
+    folder_name = f"empleado_{instance.idempleado.idempleado}/tipo_{instance.idtipodocumento.idtipodocumento}"
+    path = os.path.join('documentos', folder_name)
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, folder_name), exist_ok=True)
+    return os.path.join(path, filename)
+
+class Documento(models.Model): #YA
+    iddocumento = models.AutoField(primary_key=True)
+    idtipodocumento = models.ForeignKey('Tipodocumento', models.DO_NOTHING, blank=True, null=True)
+    idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, blank=True, null=True)
+    archivo = models.FileField(upload_to=upload_document_path, max_length=255)  # <-- ahora es FileField
+    nombrearchivo = models.CharField(max_length=150)
+    mimearchivo = models.CharField(max_length=10)
+    fechasubida = models.DateField()
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField()
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+    
     class Meta:
         managed=True
         db_table = 'documento'

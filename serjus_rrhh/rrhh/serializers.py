@@ -74,9 +74,19 @@ class ConvocatoriaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DocumentoSerializer(serializers.ModelSerializer):
+    archivo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Documento
         fields = '__all__'
+
+    def get_archivo_url(self, obj):
+        request = self.context.get('request')
+        if obj.archivo and request:
+            return request.build_absolute_uri(obj.archivo.url)
+        elif obj.archivo:
+            return obj.archivo.url
+        return None
 
 class EquipoSerializer(serializers.ModelSerializer):
     class Meta:

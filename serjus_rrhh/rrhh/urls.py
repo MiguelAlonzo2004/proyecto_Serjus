@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from .views import (
     EmpleadoViewSet, AmonestacionViewSet, AspiranteViewSet,
-    EmpleadocapacitacionViewSet, EvaluacionViewSet, EvaluacioncriterioViewSet,
+    EmpleadocapacitacionViewSet, CapacitacionViewSet, EvaluacionViewSet, EvaluacioncriterioViewSet,
     AusenciaViewSet, ContratoViewSet, ConvocatoriaViewSet, DocumentoViewSet,
     EquipoViewSet, HistorialpuestoViewSet, IdiomaViewSet,
     InduccionViewSet, InducciondocumentoViewSet, PuestoViewSet, RolViewSet, 
@@ -38,6 +38,7 @@ router.register(r'terminacionlaboral', TerminacionlaboralViewSet)
 router.register(r'tipodocumento', TipodocumentoViewSet)
 router.register(r'usuarios', UsuarioViewSet)
 router.register(r'estados', EstadoViewSet)
+router.register(r'capacitaciones', CapacitacionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  

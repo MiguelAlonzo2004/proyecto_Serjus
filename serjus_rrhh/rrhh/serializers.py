@@ -74,6 +74,7 @@ class ConvocatoriaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DocumentoSerializer(serializers.ModelSerializer):
+    archivo = serializers.FileField(required=False)
     archivo_url = serializers.SerializerMethodField()
 
     class Meta:

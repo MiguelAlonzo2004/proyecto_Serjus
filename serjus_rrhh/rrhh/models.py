@@ -160,33 +160,37 @@ class Documento(models.Model): #YA
         db_table = 'documento'
 
 
-class Empleado(models.Model): #YA
-    idempleado = models.AutoField(db_column='idEmpleado', primary_key=True)  # Field name made lowercase.
-    idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)  # Field name made lowercase.
+class Empleado(models.Model): 
+    idempleado = models.AutoField(db_column='idEmpleado', primary_key=True)
+    idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)
     dpi = models.CharField(max_length=13)
     nit = models.CharField(max_length=9)
     nombre = models.CharField(max_length=20)
     apellido = models.CharField(max_length=20)
     genero = models.CharField(max_length=10)
-    lugarnacimiento = models.CharField(db_column='lugarNacimiento', max_length=100)  # Field name made lowercase.
-    fechanacimiento = models.DateField(db_column='fechaNacimiento')  # Field name made lowercase.
-    telefono = models.CharField(max_length=10)
+    lugarnacimiento = models.CharField(db_column='lugarNacimiento', max_length=100)
+    fechanacimiento = models.DateField(db_column='fechaNacimiento')
+    telefonocelular = models.CharField(db_column='telefonoCelular', max_length=10, blank=True, null=True)
+    telefonoresidencial = models.CharField(db_column='telefonoResidencial', max_length=10, blank=True, null=True)
+    telefonoemergencia = models.CharField(db_column='telefonoEmergencia', max_length=10, blank=True, null=True)
+    titulonivelmedio = models.CharField(db_column='tituloNivelMedio', max_length=150, blank=True, null=True)
+    estudiosuniversitarios = models.CharField(db_column='estudiosUniversitarios', max_length=150, blank=True, null=True)
     email = models.CharField(unique=True, max_length=150)
     direccion = models.CharField(max_length=150)
-    estadocivil = models.CharField(db_column='estadoCivil', max_length=15)  # Field name made lowercase.
-    ididioma = models.ForeignKey('Idioma', models.DO_NOTHING, db_column='idIdioma', blank=True, null=True)  # Field name made lowercase.
-    idpueblocultura = models.ForeignKey('Pueblocultura', models.DO_NOTHING, db_column='idPuebloCultura', blank=True, null=True)  # Field name made lowercase.
-    numerohijos = models.IntegerField(db_column='numeroHijos')  # Field name made lowercase.
-    numeroiggs = models.CharField(db_column='numeroIggs', max_length=50, blank=True, null=True)  # Field name made lowercase.
-    idequipo = models.ForeignKey('Equipo', models.DO_NOTHING, db_column='idEquipo', blank=True, null=True)  # Field name made lowercase.
+    estadocivil = models.CharField(db_column='estadoCivil', max_length=15)
+    ididioma = models.ForeignKey('Idioma', models.DO_NOTHING, db_column='idIdioma', blank=True, null=True)
+    idpueblocultura = models.ForeignKey('Pueblocultura', models.DO_NOTHING, db_column='idPuebloCultura', blank=True, null=True)
+    numerohijos = models.IntegerField(db_column='numeroHijos')
+    numeroiggs = models.CharField(db_column='numeroIggs', max_length=50, blank=True, null=True)
+    idequipo = models.ForeignKey('Equipo', models.DO_NOTHING, db_column='idEquipo', blank=True, null=True)
     estado = models.BooleanField(default=True)
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+    idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
-    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
-
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+    
     class Meta:
         managed=True
-        db_table = 'empleado'
+        db_table = 'Empleado'
 
 
 class Empleadocapacitacion(models.Model):

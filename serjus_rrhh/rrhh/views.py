@@ -7,12 +7,12 @@ from .models import (
     Ausencia, Contrato, Convocatoria, Documento,
     Equipo, Historialpuesto, Idioma,
     Induccion, Inducciondocumento, Puesto, Rol,
-    Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterioevaluacion
+    Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterioevaluacion, Capacitacion
 )
 
 from .serializers import (
     EmpleadoSerializer, AmonestacionSerializer, AspiranteSerializer,
-    EmpleadocapacitacionSerializer, EvaluacionSerializer, EvaluacioncriterioSerializer,
+    EmpleadocapacitacionSerializer, CapacitacionSerializer, EvaluacionSerializer, EvaluacioncriterioSerializer,
     AusenciaSerializer, ContratoSerializer, ConvocatoriaSerializer, DocumentoSerializer,
     EquipoSerializer, HistorialpuestoSerializer, IdiomaSerializer,
     InduccionSerializer, InducciondocumentoSerializer, PuestoSerializer, RolSerializer,
@@ -116,6 +116,16 @@ class EmpleadocapacitacionViewSet(viewsets.ModelViewSet):
     serializer_class = EmpleadocapacitacionSerializer
     http_method_names = ['get', 'put', 'post']
 
+@extend_schema_view(
+    list=extend_schema(tags=["Capacitacion"]),
+    retrieve=extend_schema(tags=["Capacitacion"]),
+    update=extend_schema(tags=["Capacitacion"]),
+    create=extend_schema(tags=["Capacitacion"]),
+)
+class CapacitacionViewSet(viewsets.ModelViewSet):
+    queryset = Capacitacion.objects.all()
+    serializer_class = CapacitacionSerializer
+    http_method_names = ['get', 'put', 'post']
 
 @extend_schema_view(
     list=extend_schema(tags=["Evaluacion"]),

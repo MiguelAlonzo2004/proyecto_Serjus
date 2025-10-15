@@ -34,6 +34,9 @@ class CapacitacionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class EmpleadocapacitacionSerializer(serializers.ModelSerializer):
+    idempleado = serializers.PrimaryKeyRelatedField(queryset=Empleado.objects.all())
+    idcapacitacion = serializers.PrimaryKeyRelatedField(queryset=Capacitacion.objects.all())
+    
     class Meta:
         model = Empleadocapacitacion
         fields = '__all__'
@@ -74,7 +77,7 @@ class ConvocatoriaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DocumentoSerializer(serializers.ModelSerializer):
-    archivo = serializers.FileField(required=False)
+    archivo = serializers.FileField(required=False, allow_null=True)
     archivo_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -86,8 +89,30 @@ class DocumentoSerializer(serializers.ModelSerializer):
         if obj.archivo and request:
             return request.build_absolute_uri(obj.archivo.url)
         elif obj.archivo:
-            return obj.archivo.url
+            return obj.archivo.url 
         return None
+    
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+
+        # Si se indicó que se borre el archivo
+        if request and request.data.get('borrar_archivo') == 'true':
+            if instance.archivo:
+                instance.archivo.delete(save=False)
+            instance.archivo = None
+            # Si se borra archivo, ponemos marcadores simples
+            instance.mimearchivo = "-----"
+            instance.nombrearchivo = f"{instance.nombrearchivo} (archivo eliminado)"
+
+        # Si se sube un nuevo archivo
+        if 'archivo' in validated_data:
+            instance.archivo = validated_data.get('archivo')
+
+        # Asegurar que mimearchivo no quede vacío
+        if not validated_data.get('mimearchivo'):
+            validated_data['mimearchivo'] = '-----'
+
+        return super().update(instance, validated_data)
 
 class EquipoSerializer(serializers.ModelSerializer):
     class Meta:

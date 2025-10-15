@@ -6,6 +6,8 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+import os
+from django.conf import settings
 
 
 class Amonestacion(models.Model): #YA
@@ -131,10 +133,6 @@ class Criterioevaluacion(models.Model):
         managed=True
         db_table = 'criterioevaluacion'
 
-
-import os
-from django.conf import settings
-
 def upload_document_path(instance, filename):
     # Carpeta por empleado + tipo de documento
     folder_name = f"empleado_{instance.idempleado.idempleado}/tipo_{instance.idtipodocumento.idtipodocumento}"
@@ -146,7 +144,7 @@ class Documento(models.Model): #YA
     iddocumento = models.AutoField(primary_key=True)
     idtipodocumento = models.ForeignKey('Tipodocumento', models.DO_NOTHING, blank=True, null=True)
     idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, blank=True, null=True)
-    archivo = models.FileField(upload_to=upload_document_path, max_length=255)  # <-- ahora es FileField
+    archivo = models.FileField(upload_to=upload_document_path, max_length=255, null=True)  # <-- ahora es FileField
     nombrearchivo = models.CharField(max_length=150)
     mimearchivo = models.CharField(max_length=10)
     fechasubida = models.DateField()
@@ -183,6 +181,7 @@ class Empleado(models.Model):
     numerohijos = models.IntegerField(db_column='numeroHijos')
     numeroiggs = models.CharField(db_column='numeroIggs', max_length=50, blank=True, null=True)
     idequipo = models.ForeignKey('Equipo', models.DO_NOTHING, db_column='idEquipo', blank=True, null=True)
+    inicioLaboral = models.DateTimeField(db_column='inicioLaboral', auto_now_add=True, blank=True, null=True)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -211,17 +210,20 @@ class Empleadocapacitacion(models.Model):
 
 
 class Equipo(models.Model):
-    idequipo = models.AutoField(db_column='idEquipo', primary_key=True)  # Field name made lowercase.
-    idcoordinador = models.IntegerField(db_column='idCoordinador')  # Field name made lowercase.
-    nombreequipo = models.CharField(db_column='nombreEquipo', max_length=100)  # Field name made lowercase.
-    estado = models.BooleanField(default=True)  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+    idequipo = models.AutoField(db_column='idEquipo', primary_key=True)
+    idcoordinador = models.IntegerField(db_column='idCoordinador', null=True)
+    nombreequipo = models.CharField(db_column='nombreEquipo', max_length=100)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
-    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
 
     class Meta:
-        managed=True
+        managed = True
         db_table = 'equipo'
+
+    def __str__(self):
+        return self.nombreequipo
 
 
 class Estado(models.Model): #YA

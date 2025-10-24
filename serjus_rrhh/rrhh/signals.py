@@ -2,12 +2,12 @@ from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from datetime import datetime, date
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Rol, Empleado
+from .models import Usuario, Rol, Empleado, Tipodocumento  # <- agregamos Tipodocumento
 
 @receiver(post_migrate)
 def create_default_admin(sender, **kwargs):
     """
-    Crea un usuario admin y empleado por defecto después de las migraciones.
+    Crea un usuario admin, empleado por defecto y tipos de documentos iniciales después de las migraciones.
     """
     if sender.name == "rrhh":  
         # Crear rol Administrador si no existe
@@ -54,3 +54,25 @@ def create_default_admin(sender, **kwargs):
                 idempleado=empleado_default
             )
             print("Usuario admin creado correctamente.")
+
+        # Crear tipos de documentos por defecto
+        documentos_por_defecto = [
+            "CURRICULUM ACREDITADO",
+            "INFORME",
+            "COMPROBANTE DE AUSENCIA",
+            "LLAMADAS DE ATENCIÓN",
+            "DOCUMENTOS DE INDUCCIÓN",
+            "CONTRATO",
+            "RECONOCIMIENTO",
+        ]
+
+        for nombre in documentos_por_defecto:
+            Tipodocumento.objects.get_or_create(
+                nombretipo=nombre,
+                defaults={
+                    'descripcion': nombre,
+                    'estado': True,
+                    'idusuario': 1  # Usuario creador por defecto
+                }
+            )
+        print("Tipos de documentos por defecto creados correctamente.")

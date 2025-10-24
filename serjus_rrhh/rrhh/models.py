@@ -181,6 +181,7 @@ class Empleado(models.Model):
     numerohijos = models.IntegerField(db_column='numeroHijos')
     numeroiggs = models.CharField(db_column='numeroIggs', max_length=50, blank=True, null=True)
     idequipo = models.ForeignKey('Equipo', models.DO_NOTHING, db_column='idEquipo', blank=True, null=True)
+    idpuesto = models.ForeignKey('Puesto', models.DO_NOTHING, db_column='idPuesto', blank=True, null=True)
     inicioLaboral = models.DateTimeField(db_column='inicioLaboral', auto_now_add=True, blank=True, null=True)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')

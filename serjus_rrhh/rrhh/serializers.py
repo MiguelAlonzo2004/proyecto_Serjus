@@ -72,6 +72,7 @@ class ContratoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ConvocatoriaSerializer(serializers.ModelSerializer):
+    nombrepuesto = serializers.CharField(source='idpuesto.nombrepuesto', read_only=True)
     class Meta:
         model = Convocatoria
         fields = '__all__'

@@ -106,8 +106,8 @@ class Contrato(models.Model): #YA
 class Convocatoria(models.Model):
     idconvocatoria = models.AutoField(db_column='idConvocatoria', primary_key=True)  # Field name made lowercase.
     idpuesto = models.ForeignKey('Puesto', models.DO_NOTHING, db_column='idPuesto', blank=True, null=True)  # Field name made lowercase.
-    nombreconvocatoria = models.CharField(db_column='nombreConvocatoria', max_length=150)  # Field name made lowercase.
-    descripcion = models.CharField(max_length=150)
+    nombreconvocatoria = models.CharField(db_column='nombreConvocatoria', max_length=500)  # Field name made lowercase.
+    descripcion = models.CharField(max_length=5000)
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     fechafin = models.DateField(db_column='fechaFin')  # Field name made lowercase.
     estado = models.BooleanField(default=True)

@@ -7,7 +7,7 @@ from .views import (
     EquipoViewSet, HistorialpuestoViewSet, IdiomaViewSet,
     InduccionViewSet, InducciondocumentoViewSet, PuestoViewSet, RolViewSet, 
     TerminacionlaboralViewSet, TipodocumentoViewSet, UsuarioViewSet, EstadoViewSet, 
-    PuebloViewSet, CriterioevaluacionViewSet, CapacitacionViewSet
+    PuebloViewSet, CriterioevaluacionViewSet, CapacitacionViewSet, PostulacionViewSet
 )
 from .viewspersonalizadas import  login_usuario  
 
@@ -39,6 +39,7 @@ router.register(r'tipodocumento', TipodocumentoViewSet)
 router.register(r'usuarios', UsuarioViewSet)
 router.register(r'estados', EstadoViewSet)
 router.register(r'capacitaciones', CapacitacionViewSet)
+router.register(r'postulaciones', PostulacionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  

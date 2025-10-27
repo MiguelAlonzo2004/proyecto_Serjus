@@ -1,5 +1,6 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status, filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework.response import Response
 
 from .models import (
     Empleado, Amonestacion, Aspirante,
@@ -7,7 +8,7 @@ from .models import (
     Ausencia, Contrato, Convocatoria, Documento,
     Equipo, Historialpuesto, Idioma,
     Induccion, Inducciondocumento, Puesto, Rol,
-    Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterioevaluacion, Capacitacion
+    Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterioevaluacion, Capacitacion, Postulacion
 )
 
 from .serializers import (
@@ -16,8 +17,34 @@ from .serializers import (
     AusenciaSerializer, ContratoSerializer, ConvocatoriaSerializer, DocumentoSerializer,
     EquipoSerializer, HistorialpuestoSerializer, IdiomaSerializer,
     InduccionSerializer, InducciondocumentoSerializer, PuestoSerializer, RolSerializer,
-    TerminacionlaboralSerializer, TipodocumentoSerializer, UsuarioSerializer, EstadoSerializer, PuebloSerializer, CriterioevaluacionSerializer
+    TerminacionlaboralSerializer, TipodocumentoSerializer, UsuarioSerializer, EstadoSerializer, PuebloSerializer, CriterioevaluacionSerializer,
+    PostulacionSerializer
 )
+
+@extend_schema_view(
+    list=extend_schema(tags=["Postulacion"]),
+    retrieve=extend_schema(tags=["Postulacion"]),
+    update=extend_schema(tags=["Postulacion"]),
+    create=extend_schema(tags=["Postulacion"]),
+)
+
+class PostulacionViewSet(viewsets.ModelViewSet):
+    queryset = Postulacion.objects.all()
+    serializer_class = PostulacionSerializer
+    http_method_names = ['get', 'put', 'post']
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        if Postulacion.objects.filter(
+            idaspirante=data.get("idaspirante"),
+            idconvocatoria=data.get("idconvocatoria")
+        ).exists():
+            return Response(
+                {"error": "El aspirante ya está postulado a esta convocatoria"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return super().create(request, *args, **kwargs)
 
 @extend_schema_view(
     list=extend_schema(tags=["CriterioEvaluacion"]),
@@ -77,6 +104,8 @@ class AmonestacionViewSet(viewsets.ModelViewSet):
 class AspiranteViewSet(viewsets.ModelViewSet):
     queryset = Aspirante.objects.all()
     serializer_class = AspiranteSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['dpi']
     http_method_names = ['get', 'put', 'post']
 
 

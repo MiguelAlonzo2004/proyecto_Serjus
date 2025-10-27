@@ -5,8 +5,13 @@ from .models import Capacitacion, Empleadocapacitacion, Evaluacion, Evaluacioncr
 from .models import (
     Ausencia, Contrato, Convocatoria, Documento, 
     Equipo, Historialpuesto, Idioma, 
-    Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura
+    Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Postulacion
 )
+
+class PostulacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Postulacion
+        fields = '__all__'
 
 class PuebloSerializer(serializers.ModelSerializer):
     class Meta:
@@ -73,6 +78,7 @@ class ContratoSerializer(serializers.ModelSerializer):
 
 class ConvocatoriaSerializer(serializers.ModelSerializer):
     nombrepuesto = serializers.CharField(source='idpuesto.nombrepuesto', read_only=True)
+    
     class Meta:
         model = Convocatoria
         fields = '__all__'

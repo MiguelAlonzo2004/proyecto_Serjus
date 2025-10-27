@@ -32,7 +32,7 @@ class Aspirante(models.Model):
     nombreaspirante = models.CharField(db_column='nombreAspirante', max_length=100)  # Field name made lowercase.
     apellidoaspirante = models.CharField(db_column='apellidoAspirante', max_length=100)  # Field name made lowercase.
     nit = models.CharField(max_length=9)
-    dpi = models.CharField(max_length=13)
+    dpi = models.CharField(max_length=13, unique=True)
     genero = models.CharField(max_length=10)
     email = models.CharField(max_length=150)
     fechanacimiento = models.DateField(db_column='fechaNacimiento')  # Field name made lowercase.
@@ -48,7 +48,6 @@ class Aspirante(models.Model):
     class Meta:
         managed=True
         db_table = 'aspirante'
-
 
 class Ausencia(models.Model): #YA
     idausencia = models.AutoField(db_column='idAusencia', primary_key=True)  # Field name made lowercase.
@@ -135,16 +134,30 @@ class Criterioevaluacion(models.Model):
         db_table = 'criterioevaluacion'
 
 def upload_document_path(instance, filename):
-    # Carpeta por empleado + tipo de documento
-    folder_name = f"empleado_{instance.idempleado.idempleado}/tipo_{instance.idtipodocumento.idtipodocumento}"
-    path = os.path.join('documentos', folder_name)
-    os.makedirs(os.path.join(settings.MEDIA_ROOT, folder_name), exist_ok=True)
-    return os.path.join(path, filename)
+    # DOCUMENTOS DE ASPIRANTE
+    if getattr(instance, 'idaspirante', None):
+        folder_name = f"aspirante_{instance.idaspirante.idaspirante}/tipo_{instance.idtipodocumento.idtipodocumento}"
+    
+    # DOCUMENTOS DE EMPLEADO
+    elif getattr(instance, 'idempleado', None):
+        folder_name = f"empleado_{instance.idempleado.idempleado}/tipo_{instance.idtipodocumento.idtipodocumento}"
+    
+    else:
+        # fallback si no hay relación (evita errores)
+        folder_name = "otros"
+
+    # Crear carpeta si no existe
+    folder_path = os.path.join(settings.MEDIA_ROOT, 'documentos', folder_name)
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Devolver la ruta final donde se almacenará el archivo
+    return os.path.join('documentos', folder_name, filename)
 
 class Documento(models.Model): #YA
     iddocumento = models.AutoField(primary_key=True)
     idtipodocumento = models.ForeignKey('Tipodocumento', models.DO_NOTHING, blank=True, null=True)
     idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, blank=True, null=True)
+    idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)
     archivo = models.FileField(upload_to=upload_document_path, max_length=255, null=True)  # <-- ahora es FileField
     nombrearchivo = models.CharField(max_length=150)
     mimearchivo = models.CharField(max_length=10)
@@ -162,7 +175,7 @@ class Documento(models.Model): #YA
 class Empleado(models.Model): 
     idempleado = models.AutoField(db_column='idEmpleado', primary_key=True)
     idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)
-    dpi = models.CharField(max_length=13)
+    dpi = models.CharField(max_length=13, unique=True)
     nit = models.CharField(max_length=9)
     nombre = models.CharField(max_length=20)
     apellido = models.CharField(max_length=20)
@@ -352,6 +365,7 @@ class Postulacion(models.Model):
     class Meta:
         managed=True
         db_table = 'postulacion'
+        unique_together = ('idaspirante', 'idconvocatoria')
 
 
 class Pueblocultura(models.Model): #Ya

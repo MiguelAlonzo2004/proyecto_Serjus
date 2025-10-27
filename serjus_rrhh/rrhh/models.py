@@ -54,6 +54,7 @@ class Ausencia(models.Model): #YA
     idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, db_column='idEmpleado', blank=True, null=True)  # Field name made lowercase.
     tipo = models.CharField(max_length=50)
     motivo = models.CharField(max_length=100)
+    diagnostico = models.TextField(blank=True, null=True)
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     fechafin = models.DateField(db_column='fechaFin', blank=True, null=True)  # Field name made lowercase.
     iddocumento = models.IntegerField(db_column='idDocumento')  # Field name made lowercase.

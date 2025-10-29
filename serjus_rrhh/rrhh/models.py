@@ -76,6 +76,7 @@ class Capacitacion(models.Model):
     fechafin = models.DateField(db_column='fechaFin')  # Field name made lowercase.
     institucionfacilitadora = models.CharField(db_column='institucionFacilitadora', max_length=150)  # Field name made lowercase.
     montoejecutado = models.DecimalField(db_column='montoEjecutado', max_digits=10, decimal_places=2)  # Field name made lowercase.
+    observacion = models.CharField(max_length=150, null=True, blank=True) 
     estado = models.BooleanField(default=True)  # This field type is a guess.
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -212,8 +213,8 @@ class Empleadocapacitacion(models.Model):
     idempleado = models.ForeignKey(Empleado, models.DO_NOTHING, db_column='idEmpleado', blank = True, null = True)  # Field name made lowercase.
     idcapacitacion = models.ForeignKey(Capacitacion, models.DO_NOTHING, db_column='idCapacitacion', blank=True, null=True)  # Field name made lowercase.
     asistencia = models.TextField(blank=True, null=True)  # This field type is a guess.
-    observacion = models.CharField(max_length=150)
-    fechaenvio = models.DateField(db_column='fechaEnvio')  # Field name made lowercase.
+    fechaenvio = models.DateField(db_column='fechaEnvio', blank=True, null=True)   # Field name made lowercase.
+    iddocumento = models.ForeignKey('Documento', models.DO_NOTHING, db_column='idDocumento', blank=True, null=True)  
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)

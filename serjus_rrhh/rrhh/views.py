@@ -1,6 +1,9 @@
 from rest_framework import viewsets, status, filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.response import Response
+import os
+from django.conf import settings
+import shutil
 
 from .models import (
     Empleado, Amonestacion, Aspirante,
@@ -31,7 +34,7 @@ from .serializers import (
 class PostulacionViewSet(viewsets.ModelViewSet):
     queryset = Postulacion.objects.all()
     serializer_class = PostulacionSerializer
-    http_method_names = ['get', 'put', 'post']
+    http_method_names = ['get', 'put', 'post', 'delete']
 
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -45,6 +48,48 @@ class PostulacionViewSet(viewsets.ModelViewSet):
             )
         
         return super().create(request, *args, **kwargs)
+    
+@extend_schema_view(
+    list=extend_schema(tags=["Aspirante"]),
+    retrieve=extend_schema(tags=["Aspirante"]),
+    update=extend_schema(tags=["Aspirante"]),
+    create=extend_schema(tags=["Aspirante"]),
+    destroy=extend_schema(tags=["Aspirante"]),
+)
+class AspiranteViewSet(viewsets.ModelViewSet):
+    queryset = Aspirante.objects.all()
+    serializer_class = AspiranteSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['dpi', 'nombreaspirante', 'apellidoaspirante']
+    http_method_names = ['get', 'put', 'post', 'delete']  # ahora permite DELETE
+
+    def destroy(self, request, *args, **kwargs):
+        aspirante = self.get_object()
+        aspirante_id = aspirante.idaspirante
+
+        # Eliminar postulaciones del aspirante
+        Postulacion.objects.filter(idaspirante=aspirante_id).delete()
+
+        # 2Eliminar documentos asociados
+        documentos = Documento.objects.filter(idaspirante=aspirante_id)
+        for doc in documentos:
+            # Eliminar archivo físico si existe
+            if doc.archivo and os.path.exists(doc.archivo.path):
+                os.remove(doc.archivo.path)
+        documentos.delete()
+
+        # Eliminar carpeta del aspirante
+        aspirante_dir = os.path.join(settings.MEDIA_ROOT, f'documentos/aspirante_{aspirante_id}')
+        if os.path.exists(aspirante_dir):
+            shutil.rmtree(aspirante_dir, ignore_errors=True)
+
+        # Eliminar aspirante
+        aspirante.delete()
+
+        return Response(
+            {"message": f"Aspirante {aspirante_id} y todos sus datos fueron eliminados correctamente."},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 @extend_schema_view(
     list=extend_schema(tags=["CriterioEvaluacion"]),
@@ -92,20 +137,6 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
 class AmonestacionViewSet(viewsets.ModelViewSet):
     queryset = Amonestacion.objects.all()
     serializer_class = AmonestacionSerializer
-    http_method_names = ['get', 'put', 'post']
-
-
-@extend_schema_view(
-    list=extend_schema(tags=["Aspirante"]),
-    retrieve=extend_schema(tags=["Aspirante"]),
-    update=extend_schema(tags=["Aspirante"]),
-    create=extend_schema(tags=["Aspirante"]),
-)
-class AspiranteViewSet(viewsets.ModelViewSet):
-    queryset = Aspirante.objects.all()
-    serializer_class = AspiranteSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['dpi']
     http_method_names = ['get', 'put', 'post']
 
 

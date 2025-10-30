@@ -54,10 +54,12 @@ class Ausencia(models.Model): #YA
     idausencia = models.AutoField(db_column='idAusencia', primary_key=True)  # Field name made lowercase.
     idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, db_column='idEmpleado', blank=True, null=True)  # Field name made lowercase.
     tipo = models.CharField(max_length=50)
-    motivo = models.CharField(max_length=100)
     diagnostico = models.TextField(blank=True, null=True)
+    es_iggs = models.BooleanField(default=False, db_column='esIGSS') 
+    otro = models.CharField(max_length=100, blank=True, null=True, db_column='otro')
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     fechafin = models.DateField(db_column='fechaFin', blank=True, null=True)  # Field name made lowercase.
+    cantidad_dias = models.IntegerField(blank=True, null=True, db_column='cantidadDias')
     iddocumento = models.IntegerField(db_column='idDocumento')  # Field name made lowercase.
     estado = models.BooleanField(default=True)  # This field type is a guess.
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.

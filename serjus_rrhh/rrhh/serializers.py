@@ -1,11 +1,12 @@
 from rest_framework import serializers
 from .models import Empleado, Amonestacion, Aspirante
 from django.contrib.auth.hashers import make_password
-from .models import Capacitacion, Empleadocapacitacion, Evaluacion, Evaluacioncriterio, Criterioevaluacion, Postulacion
+from .models import Capacitacion, Empleadocapacitacion, Evaluacion, Evaluacioncriterio, Criterio, Postulacion
 from .models import (
     Ausencia, Contrato, Convocatoria, Documento, 
     Equipo, Historialpuesto, Idioma, 
-    Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Postulacion
+    Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, 
+    Estado, Pueblocultura, Postulacion, Variable, Tipoevaluacion, Seguimiento, Seguimientovariable
 )
 
 class PostulacionSerializer(serializers.ModelSerializer):
@@ -46,19 +47,15 @@ class EmpleadocapacitacionSerializer(serializers.ModelSerializer):
         model = Empleadocapacitacion
         fields = '__all__'
 
-class PostulacionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Postulacion
-        fields = '__all__'
 
 class EvaluacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evaluacion
         fields = '__all__'
 
-class CriterioevaluacionSerializer(serializers.ModelSerializer):
+class CriterioSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Criterioevaluacion
+        model = Criterio
         fields = '__all__'
 
 class EvaluacioncriterioSerializer(serializers.ModelSerializer):
@@ -194,3 +191,23 @@ class EstadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Estado
         fields = '__all__'  
+
+class SeguimientoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Seguimiento
+        fields = '__all__'
+
+class SeguimientoVariableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Seguimientovariable
+        fields = '__all__'
+
+class TipoevaluacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tipoevaluacion
+        fields = '__all__'
+
+class VariableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Variable
+        fields = '__all__'

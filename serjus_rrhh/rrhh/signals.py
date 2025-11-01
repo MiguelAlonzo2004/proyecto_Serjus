@@ -2,7 +2,7 @@ from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from datetime import datetime, date
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Rol, Empleado, Tipodocumento  # <- agregamos Tipodocumento
+from .models import Usuario, Rol, Empleado, Tipodocumento, Tipoevaluacion  # <- agregamos Tipodocumento
 
 @receiver(post_migrate)
 def create_default_admin(sender, **kwargs):
@@ -76,3 +76,21 @@ def create_default_admin(sender, **kwargs):
                 }
             )
         print("Tipos de documentos por defecto creados correctamente.")
+
+         # === Tipos de evaluación por defecto ===
+        tipos_evaluacion = [
+            "Coordinador",
+            "Acompañante",
+            "Administrativo",
+            "Entrevista"
+        ]
+
+        for tipo in tipos_evaluacion:
+            Tipoevaluacion.objects.get_or_create(
+                nombretipo=tipo,
+                defaults={
+                    'estado': True,
+                    'idusuario': 1
+                }
+            )
+        print("Tipos de evaluación por defecto creados correctamente.")

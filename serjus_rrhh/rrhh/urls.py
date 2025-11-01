@@ -7,7 +7,8 @@ from .views import (
     EquipoViewSet, HistorialpuestoViewSet, IdiomaViewSet,
     InduccionViewSet, InducciondocumentoViewSet, PuestoViewSet, RolViewSet, 
     TerminacionlaboralViewSet, TipodocumentoViewSet, UsuarioViewSet, EstadoViewSet, 
-    PuebloViewSet, CriterioevaluacionViewSet, CapacitacionViewSet, PostulacionViewSet
+    PuebloViewSet, CriterioViewSet, CapacitacionViewSet, PostulacionViewSet,
+    VariableViewSet, SeguimientoVariableViewSet, SeguimientoViewSet, TipoevaluacionViewSet
 )
 from .viewspersonalizadas import  login_usuario  
 
@@ -15,7 +16,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 router = routers.DefaultRouter()
-router.register(r'criterioevaluacion', CriterioevaluacionViewSet)
+router.register(r'criterio', CriterioViewSet)
 router.register(r'pueblocultura', PuebloViewSet)
 router.register(r'empleados', EmpleadoViewSet)
 router.register(r'amonestaciones', AmonestacionViewSet)
@@ -40,6 +41,10 @@ router.register(r'usuarios', UsuarioViewSet)
 router.register(r'estados', EstadoViewSet)
 router.register(r'capacitaciones', CapacitacionViewSet)
 router.register(r'postulaciones', PostulacionViewSet)
+router.register(r'variables', VariableViewSet)
+router.register(r'seguimientovariable', SeguimientoVariableViewSet)
+router.register(r'seguimientos', SeguimientoViewSet)
+router.register(r'tipoevaluacion', TipoevaluacionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  

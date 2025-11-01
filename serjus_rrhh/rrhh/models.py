@@ -123,18 +123,19 @@ class Convocatoria(models.Model):
         db_table = 'convocatoria'
 
 
-class Criterioevaluacion(models.Model):
-    idcriterioevaluacion = models.AutoField(db_column='idCriterioEvaluacion', primary_key=True)  # Field name made lowercase.
-    nombrecriterio = models.CharField(db_column='nombreCriterio', max_length=100)  # Field name made lowercase.
-    descripcioncriterio = models.CharField(db_column='descripcionCriterio', max_length=150)  # Field name made lowercase.
-    estado = models.BooleanField(default=True)  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+class Criterio(models.Model):
+    idcriterio = models.AutoField(db_column='idCriterio', primary_key=True)
+    idvariable = models.ForeignKey('Variable', models.DO_NOTHING, db_column='idVariable', blank=True, null=True)
+    nombrecriterio = models.CharField(db_column='nombreCriterio', max_length=100)
+    descripcioncriterio = models.CharField(db_column='descripcionCriterio', max_length=150)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
-    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
 
     class Meta:
-        managed=True
-        db_table = 'criterioevaluacion'
+        managed = True
+        db_table = 'criterio'
 
 def upload_document_path(instance, filename):
     # DOCUMENTOS DE ASPIRANTE
@@ -259,35 +260,36 @@ class Estado(models.Model): #YA
 
 
 class Evaluacion(models.Model):
-    idevaluacion = models.AutoField(db_column='idEvaluacion', primary_key=True)  # Field name made lowercase.
-    idempleado = models.ForeignKey(Empleado, models.DO_NOTHING, db_column='idEmpleado', blank=True, null=True)  # Field name made lowercase.
-    tipoevaluacion = models.CharField(db_column='tipoEvaluacion', max_length=100)  # Field name made lowercase.
-    fechaevaluacion = models.DateTimeField(db_column='fechaEvaluacion')  # Field name made lowercase.
-    puntajetotal = models.DecimalField(db_column='puntajeTotal', max_digits=10, decimal_places=2)  # Field name made lowercase.
-    observacion = models.CharField(max_length=150)
-    estado = models.BooleanField(default=True)  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+    idevaluacion = models.AutoField(db_column='idEvaluacion', primary_key=True)
+    idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, db_column='idEmpleado', blank=True, null=True)
+    modalidad = models.CharField(db_column='modalidad', max_length=20, blank=True, null=True)
+    fechaevaluacion = models.DateTimeField(db_column='fechaEvaluacion')
+    puntajetotal = models.DecimalField(db_column='puntajeTotal', max_digits=10, decimal_places=2)
+    observacion = models.CharField(db_column='observacion', max_length=150)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
-    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
-    idpostulacion = models.ForeignKey('Postulacion', models.DO_NOTHING, db_column='idPostulacion', blank=True, null=True)  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+    idpostulacion = models.ForeignKey('Postulacion', models.DO_NOTHING, db_column='idPostulacion', blank=True, null=True)
 
     class Meta:
-        managed=True
+        managed = True
         db_table = 'evaluacion'
 
 
 class Evaluacioncriterio(models.Model):
-    idevaluacioncriterio = models.AutoField(db_column='idEvaluacionCriterio', primary_key=True)  # Field name made lowercase.
-    idevaluacion = models.ForeignKey(Evaluacion, models.DO_NOTHING, db_column='idEvaluacion', blank = True, null = True)  # Field name made lowercase.
-    idcriterioevaluacion = models.ForeignKey(Criterioevaluacion, models.DO_NOTHING, db_column='idCriterioEvaluacion', blank = True, null = True)  # Field name made lowercase.
-    puntajecriterio = models.DecimalField(db_column='puntajeCriterio', max_digits=10, decimal_places=2)  # Field name made lowercase.
-    estado = models.BooleanField(default=True)  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+    idevaluacioncriterio = models.AutoField(db_column='idEvaluacionCriterio', primary_key=True)
+    puntajecriterio = models.DecimalField(db_column='puntajeCriterio', max_digits=10, decimal_places=2)
+    observacion = models.CharField(db_column='observacion', max_length=100, blank=True, null=True)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
-    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+    idevaluacion = models.ForeignKey('Evaluacion', models.DO_NOTHING, db_column='idEvaluacion', blank=True, null=True)
+    idcriterio = models.ForeignKey('Criterio', models.DO_NOTHING, db_column='idCriterio', blank=True, null=True)
 
     class Meta:
-        managed=True
+        managed = True
         db_table = 'evaluacioncriterio'
 
 
@@ -413,6 +415,36 @@ class Rol(models.Model): #YA
         db_table = 'rol'
 
 
+class Seguimiento(models.Model):
+    idseguimiento = models.AutoField(db_column='idSeguimiento', primary_key=True)
+    idresponsable = models.IntegerField(db_column='idResponsable')
+    fechaproximarev = models.DateTimeField(db_column='fechaProximaRev')
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+    createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+    idevaluacion = models.ForeignKey('Evaluacion', models.DO_NOTHING, db_column='idEvaluacion', blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'seguimiento'
+
+
+class Seguimientovariable(models.Model):
+    idseguimientovariable = models.AutoField(db_column='idSeguimientoVariable', primary_key=True)
+    accionmejora = models.TextField(db_column='accionMejora')
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+    createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+    idvariable = models.ForeignKey('Variable', models.DO_NOTHING, db_column='idVariable', blank=True, null=True)
+    idseguimiento = models.ForeignKey('Seguimiento', models.DO_NOTHING, db_column='idSeguimiento', blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'seguimientovariable'
+
+
 class Terminacionlaboral(models.Model): #YA
     idterminacionlaboral = models.AutoField(db_column='idTerminacionLaboral', primary_key=True)  # Field name made lowercase.
     tipoterminacion = models.CharField(db_column='tipoTerminacion', max_length=20)  # Field name made lowercase.
@@ -446,6 +478,19 @@ class Tipodocumento(models.Model): #YA
         db_table = 'tipodocumento'
 
 
+class Tipoevaluacion(models.Model):
+    idtipoevaluacion = models.AutoField(db_column='idTipoEvaluacion', primary_key=True)
+    nombretipo = models.CharField(db_column='nombreTipo', max_length=50)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+    createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'tipoevaluacion'
+
+
 class Usuario(models.Model):
     idusuario = models.AutoField(db_column='idUsuario', primary_key=True)  # Field name made lowercase.
     nombreusuario = models.CharField(db_column='nombreUsuario', max_length=100)  # Field name made lowercase.
@@ -459,3 +504,17 @@ class Usuario(models.Model):
     class Meta:
         managed=True
         db_table = 'usuario'
+
+
+class Variable(models.Model):
+    idvariable = models.AutoField(db_column='idVariable', primary_key=True)
+    idtipoevaluacion = models.ForeignKey('Tipoevaluacion', models.DO_NOTHING, db_column='idTipoEvaluacion', blank=True, null=True)
+    nombrevariable = models.CharField(db_column='nombreVariable', max_length=50)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+    createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
+    updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'variable'

@@ -75,6 +75,8 @@ class ContratoSerializer(serializers.ModelSerializer):
 
 class ConvocatoriaSerializer(serializers.ModelSerializer):
     nombrepuesto = serializers.CharField(source='idpuesto.nombrepuesto', read_only=True)
+    fechainicio = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%d"])
+    fechafin = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%d"], allow_null=True)
     
     class Meta:
         model = Convocatoria

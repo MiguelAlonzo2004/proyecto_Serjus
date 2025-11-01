@@ -11,7 +11,8 @@ from .models import (
     Ausencia, Contrato, Convocatoria, Documento,
     Equipo, Historialpuesto, Idioma,
     Induccion, Inducciondocumento, Puesto, Rol,
-    Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterioevaluacion, Capacitacion, Postulacion
+    Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterio, Capacitacion, Postulacion, Variable,
+    Seguimientovariable, Seguimiento, Tipoevaluacion
 )
 
 from .serializers import (
@@ -20,8 +21,8 @@ from .serializers import (
     AusenciaSerializer, ContratoSerializer, ConvocatoriaSerializer, DocumentoSerializer,
     EquipoSerializer, HistorialpuestoSerializer, IdiomaSerializer,
     InduccionSerializer, InducciondocumentoSerializer, PuestoSerializer, RolSerializer,
-    TerminacionlaboralSerializer, TipodocumentoSerializer, UsuarioSerializer, EstadoSerializer, PuebloSerializer, CriterioevaluacionSerializer,
-    PostulacionSerializer
+    TerminacionlaboralSerializer, TipodocumentoSerializer, UsuarioSerializer, EstadoSerializer, PuebloSerializer, CriterioSerializer,
+    PostulacionSerializer, VariableSerializer, SeguimientoVariableSerializer, SeguimientoSerializer, TipoevaluacionSerializer
 )
 
 @extend_schema_view(
@@ -92,14 +93,14 @@ class AspiranteViewSet(viewsets.ModelViewSet):
         )
 
 @extend_schema_view(
-    list=extend_schema(tags=["CriterioEvaluacion"]),
-    retrieve=extend_schema(tags=["CriterioEvaluacion"]),
-    update=extend_schema(tags=["CriterioEvaluacion"]),
-    create=extend_schema(tags=["CriterioEvaluacion"]),
+    list=extend_schema(tags=["Criterio"]),
+    retrieve=extend_schema(tags=["Criterio"]),
+    update=extend_schema(tags=["Criterio"]),
+    create=extend_schema(tags=["Criterio"]),
 )
-class CriterioevaluacionViewSet(viewsets.ModelViewSet):
-    queryset = Criterioevaluacion.objects.all()
-    serializer_class = CriterioevaluacionSerializer
+class CriterioViewSet(viewsets.ModelViewSet):
+    queryset = Criterio.objects.all()
+    serializer_class = CriterioSerializer
     http_method_names = ['get', 'put', 'post']
 
 @extend_schema_view(
@@ -232,6 +233,42 @@ class InduccionViewSet(viewsets.ModelViewSet):
 class InducciondocumentoViewSet(viewsets.ModelViewSet):
     queryset = Inducciondocumento.objects.all()
     serializer_class = InducciondocumentoSerializer
+    http_method_names = ['get', 'put', 'post']
+
+
+@extend_schema_view(
+    list=extend_schema(tags=["Seguimiento"]),
+    retrieve=extend_schema(tags=["Seguimiento"]),
+    update=extend_schema(tags=["Seguimiento"]),
+    create=extend_schema(tags=["Seguimiento"]),
+)
+class SeguimientoViewSet(viewsets.ModelViewSet):
+    queryset = Seguimiento.objects.all()
+    serializer_class = SeguimientoSerializer
+    http_method_names = ['get', 'put', 'post']
+
+
+@extend_schema_view(
+    list=extend_schema(tags=["Seguimientovariable"]),
+    retrieve=extend_schema(tags=["Seguimientovariable"]),
+    update=extend_schema(tags=["Seguimientovariable"]),
+    create=extend_schema(tags=["Seguimientovariable"]),
+)
+class SeguimientoVariableViewSet(viewsets.ModelViewSet):
+    queryset = Seguimientovariable.objects.all()
+    serializer_class = SeguimientoVariableSerializer
+    http_method_names = ['get', 'put', 'post']
+
+
+@extend_schema_view(
+    list=extend_schema(tags=["Tipoevaluacion"]),
+    retrieve=extend_schema(tags=["Tipoevaluacion"]),
+    update=extend_schema(tags=["Tipoevaluacion"]),
+    create=extend_schema(tags=["Tipoevaluacion"]),
+)    
+class TipoevaluacionViewSet(viewsets.ModelViewSet):
+    queryset = Tipoevaluacion.objects.all()
+    serializer_class = TipoevaluacionSerializer
     http_method_names = ['get', 'put', 'post']
 
 
@@ -370,3 +407,13 @@ class IdiomaViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'put', 'post']
     
 
+@extend_schema_view(
+    list=extend_schema(tags=["Variable"]),
+    retrieve=extend_schema(tags=["Variable"]),
+    update=extend_schema(tags=["Variable"]),
+    create=extend_schema(tags=["Variable"]),
+)
+class VariableViewSet(viewsets.ModelViewSet):
+    queryset = Variable.objects.all()
+    serializer_class = VariableSerializer
+    http_method_names = ['get', 'put', 'post']

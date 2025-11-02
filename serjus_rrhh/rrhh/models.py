@@ -28,26 +28,31 @@ class Amonestacion(models.Model): #YA
 
 
 class Aspirante(models.Model):
-    idaspirante = models.AutoField(db_column='idAspirante', primary_key=True)  # Field name made lowercase.
-    nombreaspirante = models.CharField(db_column='nombreAspirante', max_length=100)  # Field name made lowercase.
-    apellidoaspirante = models.CharField(db_column='apellidoAspirante', max_length=100)  # Field name made lowercase.
+    idaspirante = models.AutoField(db_column='idAspirante', primary_key=True)
+    nombreaspirante = models.CharField(db_column='nombreAspirante', max_length=100)
+    apellidoaspirante = models.CharField(db_column='apellidoAspirante', max_length=100)
     nit = models.CharField(max_length=9)
     dpi = models.CharField(max_length=13, unique=True)
     genero = models.CharField(max_length=10)
     email = models.CharField(max_length=150)
-    fechanacimiento = models.DateField(db_column='fechaNacimiento')  # Field name made lowercase.
+    fechanacimiento = models.DateField(db_column='fechaNacimiento')
     telefono = models.CharField(max_length=20)
     direccion = models.CharField(max_length=150)
-    ididioma = models.ForeignKey('Idioma', models.DO_NOTHING, db_column='idIdioma', blank=True, null=True)  # Field name made lowercase.
-    idpueblocultura = models.ForeignKey('Pueblocultura', models.DO_NOTHING, db_column='idPuebloCultura', blank=True, null=True)  # Field name made lowercase.
-    estado = models.BooleanField(default=True)  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+    ididioma = models.ForeignKey(
+        'Idioma', models.DO_NOTHING, db_column='idIdioma', blank=True, null=True
+    )
+    idpueblocultura = models.ForeignKey(
+        'Pueblocultura', models.DO_NOTHING, db_column='idPuebloCultura', blank=True, null=True
+    )
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
 
     class Meta:
-        managed=True
+        managed = True
         db_table = 'aspirante'
+
 
 class Ausencia(models.Model): #YA
     idausencia = models.AutoField(db_column='idAusencia', primary_key=True)  # Field name made lowercase.
@@ -247,10 +252,10 @@ class Equipo(models.Model):
 
 class Estado(models.Model): #YA
     idestado = models.AutoField(db_column='idEstado', primary_key=True)  # Field name made lowercase.
-    nombreestado = models.CharField(db_column='nombreEstado', max_length=20)  # Field name made lowercase.
-    descripcion = models.CharField(max_length=50)
+    nombreestado = models.CharField(db_column='nombreEstado', max_length=250)  # Field name made lowercase.
+    descripcion = models.CharField(max_length=250)
     estado = models.BooleanField()  # This field type is a guess.
-    idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
+    idusuario = models.IntegerField(db_column='idUsuario', default=1)  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
 
@@ -361,6 +366,9 @@ class Postulacion(models.Model):
     idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)  # Field name made lowercase.
     idconvocatoria = models.ForeignKey(Convocatoria, models.DO_NOTHING, db_column='idConvocatoria', blank=True, null=True)  # Field name made lowercase.
     fechapostulacion = models.DateField(db_column='fechaPostulacion')  # Field name made lowercase.
+    idestado = models.ForeignKey(
+        'Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True
+    ) 
     estado = models.BooleanField(default=True)
     observacion = models.CharField(max_length=150)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.

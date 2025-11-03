@@ -331,8 +331,8 @@ class Idioma(models.Model): #YA
 
 class Induccion(models.Model):
     idinduccion = models.AutoField(db_column='idInduccion', primary_key=True)  # Field name made lowercase.
+    nombre = models.CharField(max_length=200)  # Nuevo campo para nombre de inducción
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
-    fechafin = models.DateField(db_column='fechaFin')  # Field name made lowercase.
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -349,7 +349,6 @@ class Inducciondocumento(models.Model):
     iddocumento = models.ForeignKey(Documento, models.DO_NOTHING, db_column='idDocumento', blank=True, null=True)  # Field name made lowercase.
     fechaasignado = models.DateField(db_column='fechaAsignado')  # Field name made lowercase.
     fechacompletado = models.DateField(db_column='fechaCompletado', blank=True, null=True)  # Field name made lowercase.
-    idinforme = models.IntegerField(db_column='idInforme')  # Field name made lowercase.
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)

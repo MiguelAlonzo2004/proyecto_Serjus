@@ -368,7 +368,7 @@ class AusenciaViewSet(viewsets.ModelViewSet):
 class ConvocatoriaViewSet(viewsets.ModelViewSet):
     queryset = Convocatoria.objects.all()
     serializer_class = ConvocatoriaSerializer
-    http_method_names = ['get', 'put', 'post']
+    http_method_names = ['get', 'put', 'post', 'delete']
 
 
 @extend_schema_view(

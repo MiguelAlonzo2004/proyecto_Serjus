@@ -331,7 +331,7 @@ class Idioma(models.Model): #YA
 
 class Induccion(models.Model):
     idinduccion = models.AutoField(db_column='idInduccion', primary_key=True)  # Field name made lowercase.
-    nombre = models.CharField(max_length=200, null=True)  # Nuevo campo para nombre de inducción
+    nombre = models.CharField(max_length=200, default='Inducción General')  # Nuevo campo para nombre de inducción
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.

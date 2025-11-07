@@ -8,6 +8,10 @@ from .models import (
     Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, 
     Estado, Pueblocultura, Postulacion, Variable, Tipoevaluacion, Seguimiento, Seguimientovariable
 )
+class EstadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Estado
+        fields = '__all__' 
 
 class PostulacionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,7 +81,17 @@ class ConvocatoriaSerializer(serializers.ModelSerializer):
     nombrepuesto = serializers.CharField(source='idpuesto.nombrepuesto', read_only=True)
     fechainicio = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%d"])
     fechafin = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%d"], allow_null=True)
-    
+
+    # 👇 Aquí viene el truco: mostrar el estado como objeto
+    idestado = EstadoSerializer(read_only=True)
+
+    # 👇 Y aceptar el ID numérico al crear o editar
+    idestado_id = serializers.PrimaryKeyRelatedField(
+        queryset=Estado.objects.all(),
+        source='idestado',
+        write_only=True
+    )
+
     class Meta:
         model = Convocatoria
         fields = '__all__'
@@ -187,12 +201,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             instance.contrasena = make_password(contrasena)
 
         instance.save()
-        return instance
-
-class EstadoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Estado
-        fields = '__all__'  
+        return instance 
 
 class SeguimientoSerializer(serializers.ModelSerializer):
     class Meta:

@@ -8,7 +8,7 @@ from .views import (
     InduccionViewSet, InducciondocumentoViewSet, PuestoViewSet, RolViewSet, 
     TerminacionlaboralViewSet, TipodocumentoViewSet, UsuarioViewSet, EstadoViewSet, 
     PuebloViewSet, CriterioViewSet, CapacitacionViewSet, PostulacionViewSet,
-    VariableViewSet, SeguimientoVariableViewSet, SeguimientoViewSet, TipoevaluacionViewSet
+    VariableViewSet, SeguimientoVariableViewSet, SeguimientoViewSet, TipoevaluacionViewSet, limpiar_postulaciones, listar_convocatorias
 )
 from .viewspersonalizadas import  login_usuario  
 
@@ -48,7 +48,9 @@ router.register(r'tipoevaluacion', TipoevaluacionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),  
-    path('login/', login_usuario),   
+    path('login/', login_usuario),
+    path('postulaciones/limpiar/<int:idconvocatoria>/', limpiar_postulaciones),
+    path('convocatorias/', listar_convocatorias),   
 ]
 
 if settings.DEBUG:

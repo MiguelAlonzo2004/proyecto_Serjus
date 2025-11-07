@@ -2,26 +2,28 @@ from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from datetime import datetime, date
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Rol, Empleado, Tipodocumento, Tipoevaluacion  # <- agregamos Tipodocumento
+from .models import Usuario, Rol, Empleado, Tipodocumento, Tipoevaluacion, Estado  # <-- agregamos Estado
 
 @receiver(post_migrate)
-def create_default_admin(sender, **kwargs):
+def create_default_admin_and_data(sender, **kwargs):
     """
-    Crea un usuario admin, empleado por defecto y tipos de documentos iniciales después de las migraciones.
+    Crea datos por defecto después de aplicar migraciones en la app rrhh.
+    Incluye usuario admin, tipos de documentos, tipos de evaluación y estados base.
     """
     if sender.name == "rrhh":  
-        # Crear rol Administrador si no existe
-        rol_admin, created_rol = Rol.objects.get_or_create(
+
+        # === Crear rol Administrador ===
+        rol_admin, _ = Rol.objects.get_or_create(
             nombrerol="Administrador",
             defaults={
                 'descripcion': 'Rol con todos los permisos',
                 'estado': True,
-                'idusuario': 1,  # Se puede asignar 1 como creador por defecto
+                'idusuario': 1,
             }
         )
 
-        # Crear empleado default si no existe
-        empleado_default, created_emp = Empleado.objects.get_or_create(
+        # === Crear empleado por defecto ===
+        empleado_default, _ = Empleado.objects.get_or_create(
             dpi="0000000000000",
             defaults={
                 'nit': "0000000",
@@ -42,7 +44,7 @@ def create_default_admin(sender, **kwargs):
             }
         )
 
-        # Crear usuario admin si no existe
+        # === Crear usuario admin ===
         if not Usuario.objects.filter(nombreusuario="admin").exists():
             Usuario.objects.create(
                 nombreusuario="admin",
@@ -55,7 +57,7 @@ def create_default_admin(sender, **kwargs):
             )
             print("Usuario admin creado correctamente.")
 
-        # Crear tipos de documentos por defecto
+        # === Tipos de documentos por defecto ===
         documentos_por_defecto = [
             "CURRICULUM ACREDITADO",
             "INFORME",
@@ -72,12 +74,12 @@ def create_default_admin(sender, **kwargs):
                 defaults={
                     'descripcion': nombre,
                     'estado': True,
-                    'idusuario': 1  # Usuario creador por defecto
+                    'idusuario': 1
                 }
             )
         print("Tipos de documentos por defecto creados correctamente.")
 
-         # === Tipos de evaluación por defecto ===
+        # === Tipos de evaluación por defecto ===
         tipos_evaluacion = [
             "Coordinador",
             "Acompañante",
@@ -94,3 +96,29 @@ def create_default_admin(sender, **kwargs):
                 }
             )
         print("Tipos de evaluación por defecto creados correctamente.")
+
+        # === Estados por defecto (migrado desde la migración anterior) ===
+        estados_aspirantes = [
+            {"nombreestado": "Postulado", "descripcion": "Aspirante ha postulado"},
+            {"nombreestado": "Seleccionado para Entrevista", "descripcion": "Aspirante seleccionado para entrevista"},
+            {"nombreestado": "Rechazado", "descripcion": "Aspirante no continúa en el proceso"},
+        ]
+
+        estados_convocatorias = [
+            {"nombreestado": "Abierta", "descripcion": "Convocatoria disponible para postulaciones activas."},
+            {"nombreestado": "Cerrada", "descripcion": "Convocatoria cerrada. No se aceptan nuevas postulaciones."},
+            {"nombreestado": "Finalizada", "descripcion": "Convocatoria finalizada. Se completó el proceso de selección."},
+        ]
+
+        todos_los_estados = estados_aspirantes + estados_convocatorias
+
+        for e in todos_los_estados:
+            Estado.objects.get_or_create(
+                nombreestado=e["nombreestado"],
+                defaults={
+                    'descripcion': e["descripcion"],
+                    'estado': True,
+                    'idusuario': 1
+                }
+            )
+        print("Estados por defecto creados correctamente.")

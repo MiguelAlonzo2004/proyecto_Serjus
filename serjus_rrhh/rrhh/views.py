@@ -1,6 +1,8 @@
 from rest_framework import viewsets, status, filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from django.utils import timezone
 import os
 from django.conf import settings
 import shutil
@@ -417,3 +419,23 @@ class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
     http_method_names = ['get', 'put', 'post']
+
+#Limpiar convocatorias
+@api_view(['DELETE'])
+def limpiar_postulaciones(request, idconvocatoria):
+    eliminadas = Postulacion.objects.filter(idconvocatoria=idconvocatoria).delete()
+    return Response({"mensaje": f"Se eliminaron {eliminadas[0]} postulaciones."})
+
+#Cerrar convocatoria al vencer
+@api_view(['GET'])
+def listar_convocatorias(request):
+    hoy = timezone.now().date()
+
+    # Actualizar todas las que ya vencieron
+    vencidas = Convocatoria.objects.filter(fechafin__lt=hoy, estado=True)
+    for conv in vencidas:
+        conv.actualizar_estado_automatico()
+
+    convocatorias = Convocatoria.objects.all().order_by('-idconvocatoria')
+    serializer = ConvocatoriaSerializer(convocatorias, many=True)
+    return Response(serializer.data)

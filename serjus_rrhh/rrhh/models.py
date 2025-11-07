@@ -8,6 +8,7 @@
 from django.db import models
 import os
 from django.conf import settings
+from django.utils import timezone
 
 
 class Amonestacion(models.Model): #YA
@@ -84,6 +85,7 @@ class Capacitacion(models.Model):
     institucionfacilitadora = models.CharField(db_column='institucionFacilitadora', max_length=150)  # Field name made lowercase.
     montoejecutado = models.DecimalField(db_column='montoEjecutado', max_digits=10, decimal_places=2)  # Field name made lowercase.
     observacion = models.CharField(max_length=150, null=True, blank=True) 
+    idestado = models.ForeignKey( 'Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True, related_name='convocatorias')
     estado = models.BooleanField(default=True)  # This field type is a guess.
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -118,10 +120,28 @@ class Convocatoria(models.Model):
     descripcion = models.CharField(max_length=5000)
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     fechafin = models.DateField(db_column='fechaFin')  # Field name made lowercase.
+    idestado = models.ForeignKey('Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
+    
+    def actualizar_estado_automatico(self):
+        """Cierra la convocatoria si la fecha fin ya pasó"""
+        hoy = timezone.now().date()
+        if self.fechafin and self.fechafin < hoy and self.estado:
+            self.estado = False
+            # opcional: cambiar también el estado textual
+            from rrhh.models import Estado
+            cerrado = Estado.objects.filter(nombreestado__iexact="Cerrada").first()
+            if cerrado:
+                self.idestado = cerrado
+            self.save()
+
+    def save(self, *args, **kwargs):
+        # Antes de guardar, actualizar estado automáticamente
+        self.actualizar_estado_automatico()
+        super().save(*args, **kwargs)
 
     class Meta:
         managed=True

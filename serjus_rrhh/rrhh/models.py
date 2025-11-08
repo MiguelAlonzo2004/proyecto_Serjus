@@ -67,6 +67,7 @@ class Ausencia(models.Model): #YA
     cantidad_dias = models.IntegerField(blank=True, null=True, db_column='cantidadDias')
     iddocumento = models.IntegerField(db_column='idDocumento')  # Field name made lowercase.
     estado = models.BooleanField(default=True)  # This field type is a guess.
+    idestado = models.ForeignKey('Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.

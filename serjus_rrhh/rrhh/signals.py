@@ -108,6 +108,7 @@ def create_default_admin_and_data(sender, **kwargs):
             {"nombreestado": "Abierta", "descripcion": "Convocatoria disponible para postulaciones activas."},
             {"nombreestado": "Cerrada", "descripcion": "Convocatoria cerrada. No se aceptan nuevas postulaciones."},
             {"nombreestado": "Finalizada", "descripcion": "Convocatoria finalizada. Se completó el proceso de selección."},
+            {"nombreestado": "Contratado", "descripcion": "Aspirante ha sido contratado"},
         ]
 
         todos_los_estados = estados_aspirantes + estados_convocatorias

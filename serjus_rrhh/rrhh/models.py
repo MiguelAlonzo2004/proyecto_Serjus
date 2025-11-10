@@ -152,7 +152,7 @@ class Convocatoria(models.Model):
 class Criterio(models.Model):
     idcriterio = models.AutoField(db_column='idCriterio', primary_key=True)
     idvariable = models.ForeignKey('Variable', models.DO_NOTHING, db_column='idVariable', blank=True, null=True)
-    nombrecriterio = models.CharField(db_column='nombreCriterio', max_length=100)
+    nombrecriterio = models.CharField(db_column='nombreCriterio', max_length=500)
     descripcioncriterio = models.CharField(db_column='descripcionCriterio', max_length=150)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')

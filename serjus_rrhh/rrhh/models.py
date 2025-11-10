@@ -309,6 +309,7 @@ class Evaluacioncriterio(models.Model):
     observacion = models.CharField(db_column='observacion', max_length=100, blank=True, null=True)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
+    idpostulacion = models.ForeignKey('Postulacion', models.DO_NOTHING, db_column='idPostulacion', blank=True, null=True)
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)
     idevaluacion = models.ForeignKey('Evaluacion', models.DO_NOTHING, db_column='idEvaluacion', blank=True, null=True)

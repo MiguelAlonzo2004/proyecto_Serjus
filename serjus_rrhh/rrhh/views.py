@@ -419,12 +419,60 @@ class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
     http_method_names = ['get', 'put', 'post']
+    
 
-#Limpiar convocatorias
-@api_view(['DELETE'])
+@api_view(['PUT'])
 def limpiar_postulaciones(request, idconvocatoria):
-    eliminadas = Postulacion.objects.filter(idconvocatoria=idconvocatoria).delete()
-    return Response({"mensaje": f"Se eliminaron {eliminadas[0]} postulaciones."})
+    # Nombres de estados que consideras como 'seleccionados'
+    NOMBRES_SELECCIONADOS = ["Seleccionado para Entrevista"]
+
+    # Obtener los IDs de esos estados
+    seleccion_ids = list(
+        Estado.objects
+        .filter(nombreestado__in=NOMBRES_SELECCIONADOS)
+        .values_list('pk', flat=True)
+    )
+
+    # Buscar si hay postulaciones seleccionadas
+    hay_seleccionadas = (
+        Postulacion.objects
+        .filter(idconvocatoria=idconvocatoria, idestado_id__in=seleccion_ids)
+        .exists()
+        if seleccion_ids else False
+    )
+
+    if hay_seleccionadas:
+        return Response(
+            {"error": "No se pueden limpiar las postulaciones: ya hay aspirantes seleccionados."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # 🔹 Buscar el ID correspondiente al estado 'Rechazado'
+    estado_rechazado = (
+        Estado.objects
+        .filter(nombreestado__iexact="Rechazado")
+        .first()
+    )
+
+    if not estado_rechazado:
+        return Response(
+            {"error": "No se encontró el estado 'Rechazado' en la tabla Estado."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # 🔹 Actualizar todas las postulaciones a inactivas y con estado 'Rechazado'
+    actualizadas = (
+        Postulacion.objects
+        .filter(idconvocatoria=idconvocatoria)
+        .update(estado=False, idestado=estado_rechazado.idestado)
+    )
+
+    return Response(
+        {"mensaje": f"Se marcaron {actualizadas} postulaciones como inactivas y rechazadas."},
+        status=status.HTTP_200_OK
+    )
+
+
 
 #Cerrar convocatoria al vencer
 @api_view(['GET'])

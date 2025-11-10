@@ -370,7 +370,6 @@ class Inducciondocumento(models.Model):
     idinduccion = models.ForeignKey(Induccion, models.DO_NOTHING, db_column='idInduccion', blank=True, null=True)  # Field name made lowercase.
     iddocumento = models.ForeignKey(Documento, models.DO_NOTHING, db_column='idDocumento', blank=True, null=True)  # Field name made lowercase.
     fechaasignado = models.DateField(db_column='fechaAsignado')  # Field name made lowercase.
-    fechacompletado = models.DateField(db_column='fechaCompletado', blank=True, null=True)  # Field name made lowercase.
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)

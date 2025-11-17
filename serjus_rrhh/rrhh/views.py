@@ -6,6 +6,9 @@ from django.utils import timezone
 import os
 from django.conf import settings
 import shutil
+from rest_framework.permissions import IsAuthenticated
+from rrhh.authentication import BearerAuthentication
+from rest_framework.permissions import AllowAny
 
 from .models import (
     Empleado, Amonestacion, Aspirante,
@@ -37,6 +40,7 @@ from .serializers import (
 class PostulacionViewSet(viewsets.ModelViewSet):
     queryset = Postulacion.objects.all()
     serializer_class = PostulacionSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post', 'delete']
 
     def create(self, request, *args, **kwargs):
@@ -62,6 +66,7 @@ class PostulacionViewSet(viewsets.ModelViewSet):
 class AspiranteViewSet(viewsets.ModelViewSet):
     queryset = Aspirante.objects.all()
     serializer_class = AspiranteSerializer
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['dpi', 'nombreaspirante', 'apellidoaspirante']
     http_method_names = ['get', 'put', 'post', 'delete']  # ahora permite DELETE
@@ -103,6 +108,8 @@ class AspiranteViewSet(viewsets.ModelViewSet):
 class CriterioViewSet(viewsets.ModelViewSet):
     queryset = Criterio.objects.all()
     serializer_class = CriterioSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 @extend_schema_view(
@@ -114,9 +121,8 @@ class CriterioViewSet(viewsets.ModelViewSet):
 class PuebloViewSet(viewsets.ModelViewSet):
     queryset = Pueblocultura.objects.all()
     serializer_class = PuebloSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
-
-
 
 # ----------------- Recursos Humanos -----------------
 @extend_schema_view(
@@ -128,6 +134,8 @@ class PuebloViewSet(viewsets.ModelViewSet):
 class EmpleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all()
     serializer_class = EmpleadoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -140,6 +148,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
 class AmonestacionViewSet(viewsets.ModelViewSet):
     queryset = Amonestacion.objects.all()
     serializer_class = AmonestacionSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -152,6 +162,8 @@ class AmonestacionViewSet(viewsets.ModelViewSet):
 class ContratoViewSet(viewsets.ModelViewSet):
     queryset = Contrato.objects.all()
     serializer_class = ContratoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -164,6 +176,8 @@ class ContratoViewSet(viewsets.ModelViewSet):
 class TerminacionlaboralViewSet(viewsets.ModelViewSet):
     queryset = Terminacionlaboral.objects.all()
     serializer_class = TerminacionlaboralSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -177,6 +191,8 @@ class TerminacionlaboralViewSet(viewsets.ModelViewSet):
 class EmpleadocapacitacionViewSet(viewsets.ModelViewSet):
     queryset = Empleadocapacitacion.objects.all()
     serializer_class = EmpleadocapacitacionSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 @extend_schema_view(
@@ -188,6 +204,8 @@ class EmpleadocapacitacionViewSet(viewsets.ModelViewSet):
 class CapacitacionViewSet(viewsets.ModelViewSet):
     queryset = Capacitacion.objects.all()
     serializer_class = CapacitacionSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 @extend_schema_view(
@@ -199,6 +217,8 @@ class CapacitacionViewSet(viewsets.ModelViewSet):
 class EvaluacionViewSet(viewsets.ModelViewSet):
     queryset = Evaluacion.objects.all()
     serializer_class = EvaluacionSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -211,6 +231,8 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
 class EvaluacioncriterioViewSet(viewsets.ModelViewSet):
     queryset = Evaluacioncriterio.objects.all()
     serializer_class = EvaluacioncriterioSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -223,6 +245,8 @@ class EvaluacioncriterioViewSet(viewsets.ModelViewSet):
 class InduccionViewSet(viewsets.ModelViewSet):
     queryset = Induccion.objects.all()
     serializer_class = InduccionSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -235,6 +259,8 @@ class InduccionViewSet(viewsets.ModelViewSet):
 class InducciondocumentoViewSet(viewsets.ModelViewSet):
     queryset = Inducciondocumento.objects.all()
     serializer_class = InducciondocumentoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -247,6 +273,8 @@ class InducciondocumentoViewSet(viewsets.ModelViewSet):
 class SeguimientoViewSet(viewsets.ModelViewSet):
     queryset = Seguimiento.objects.all()
     serializer_class = SeguimientoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -259,6 +287,8 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
 class SeguimientoVariableViewSet(viewsets.ModelViewSet):
     queryset = Seguimientovariable.objects.all()
     serializer_class = SeguimientoVariableSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -271,6 +301,8 @@ class SeguimientoVariableViewSet(viewsets.ModelViewSet):
 class TipoevaluacionViewSet(viewsets.ModelViewSet):
     queryset = Tipoevaluacion.objects.all()
     serializer_class = TipoevaluacionSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -284,6 +316,7 @@ class TipoevaluacionViewSet(viewsets.ModelViewSet):
 class PuestoViewSet(viewsets.ModelViewSet):
     queryset = Puesto.objects.all()
     serializer_class = PuestoSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -296,6 +329,8 @@ class PuestoViewSet(viewsets.ModelViewSet):
 class RolViewSet(viewsets.ModelViewSet):
     queryset = Rol.objects.all()
     serializer_class = RolSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -308,6 +343,8 @@ class RolViewSet(viewsets.ModelViewSet):
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -320,6 +357,8 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 class EstadoViewSet(viewsets.ModelViewSet):
     queryset = Estado.objects.all()
     serializer_class = EstadoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -333,6 +372,7 @@ class EstadoViewSet(viewsets.ModelViewSet):
 class DocumentoViewSet(viewsets.ModelViewSet):
     queryset = Documento.objects.all()
     serializer_class = DocumentoSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -345,6 +385,7 @@ class DocumentoViewSet(viewsets.ModelViewSet):
 class TipodocumentoViewSet(viewsets.ModelViewSet):
     queryset = Tipodocumento.objects.all()
     serializer_class = TipodocumentoSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -358,6 +399,8 @@ class TipodocumentoViewSet(viewsets.ModelViewSet):
 class AusenciaViewSet(viewsets.ModelViewSet):
     queryset = Ausencia.objects.all()
     serializer_class = AusenciaSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -367,9 +410,11 @@ class AusenciaViewSet(viewsets.ModelViewSet):
     update=extend_schema(tags=["Convocatoria"]),
     create=extend_schema(tags=["Convocatoria"]),
 )
+
 class ConvocatoriaViewSet(viewsets.ModelViewSet):
     queryset = Convocatoria.objects.all()
     serializer_class = ConvocatoriaSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post', 'delete']
 
 
@@ -382,6 +427,8 @@ class ConvocatoriaViewSet(viewsets.ModelViewSet):
 class EquipoViewSet(viewsets.ModelViewSet):
     queryset = Equipo.objects.all()
     serializer_class = EquipoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -394,6 +441,8 @@ class EquipoViewSet(viewsets.ModelViewSet):
 class HistorialpuestoViewSet(viewsets.ModelViewSet):
     queryset = Historialpuesto.objects.all()
     serializer_class = HistorialpuestoSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
 
@@ -406,6 +455,7 @@ class HistorialpuestoViewSet(viewsets.ModelViewSet):
 class IdiomaViewSet(viewsets.ModelViewSet):
     queryset = Idioma.objects.all()
     serializer_class = IdiomaSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
     
 
@@ -418,6 +468,8 @@ class IdiomaViewSet(viewsets.ModelViewSet):
 class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
+    authentication_classes = [BearerAuthentication]
+    permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
     
 

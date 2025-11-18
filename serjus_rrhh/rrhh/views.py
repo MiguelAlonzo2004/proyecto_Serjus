@@ -180,6 +180,28 @@ class TerminacionlaboralViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        # Inactivar usuario vinculado al empleado
+        empleado_id = request.data.get('idempleado')
+        print(f"[DEBUG] idempleado recibido en terminación laboral: {empleado_id}")
+        if empleado_id:
+            from rrhh.models import Usuario, Empleado
+            try:
+                empleado = Empleado.objects.get(pk=empleado_id)
+                print(f"[DEBUG] Empleado encontrado: {empleado}")
+                usuarios = Usuario.objects.filter(idempleado=empleado)
+                print(f"[DEBUG] Usuarios vinculados encontrados: {usuarios.count()}")
+                for usuario in usuarios:
+                    usuario.estado = False
+                    usuario.save()
+                    print(f"[DEBUG] Usuario inactivado: {usuario.idusuario}")
+            except Empleado.DoesNotExist:
+                print(f"[DEBUG] Empleado con id {empleado_id} no existe")
+        else:
+            print("[DEBUG] No se recibió idempleado en el request")
+        return response
+
 
 # ----------------- Capacitación y Evaluación -----------------
 @extend_schema_view(

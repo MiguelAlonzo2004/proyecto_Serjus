@@ -140,9 +140,12 @@ class EquipoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class HistorialpuestoSerializer(serializers.ModelSerializer):
+    nombre_puesto = serializers.CharField(source='idpuesto.nombrepuesto', read_only=True)
+
     class Meta:
         model = Historialpuesto
         fields = '__all__'
+        # El campo nombre_puesto estará disponible en la respuesta
 
 class IdiomaSerializer(serializers.ModelSerializer):
     class Meta:

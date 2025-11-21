@@ -138,6 +138,24 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     http_method_names = ['get', 'put', 'post']
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        estado_anterior = instance.estado
+        response = super().update(request, *args, **kwargs)
+        # Solo si el estado cambió de True a False (se inactiva)
+        nuevo_estado = request.data.get('estado')
+        if estado_anterior and (str(nuevo_estado).lower() in ['false', '0']):
+            from django.utils import timezone
+            from rrhh.models import Historialpuesto
+            # Buscar el último historial de puesto del empleado
+            ultimo_historial = Historialpuesto.objects.filter(idempleado=instance).order_by('-fechainicio').first()
+            if ultimo_historial and not ultimo_historial.fechafin:
+                # Si el campo es DateField, solo guardar la fecha
+                fechafin_actual = timezone.now().date()
+                ultimo_historial.fechafin = fechafin_actual
+                ultimo_historial.save()
+        return response
+
 
 @extend_schema_view(
     list=extend_schema(tags=["Amonestacion"]),

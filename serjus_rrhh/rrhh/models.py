@@ -183,12 +183,12 @@ def upload_document_path(instance, filename):
     # Devolver la ruta final donde se almacenará el archivo
     return os.path.join('documentos', folder_name, filename)
 
-class Documento(models.Model): #YA
+class Documento(models.Model):
     iddocumento = models.AutoField(primary_key=True)
     idtipodocumento = models.ForeignKey('Tipodocumento', models.DO_NOTHING, blank=True, null=True)
     idempleado = models.ForeignKey('Empleado', models.DO_NOTHING, blank=True, null=True)
     idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)
-    archivo = models.FileField(upload_to=upload_document_path, max_length=255, null=True)  # <-- ahora es FileField
+    archivo = models.FileField(upload_to=upload_document_path, max_length=255, null=True)
     nombrearchivo = models.CharField(max_length=150)
     mimearchivo = models.CharField(max_length=10)
     fechasubida = models.DateField()
@@ -196,10 +196,19 @@ class Documento(models.Model): #YA
     idusuario = models.IntegerField()
     createdat = models.DateTimeField(auto_now_add=True)
     updatedat = models.DateTimeField(auto_now=True)
-    
+
+    # 🔥 Esta propiedad fuerza siempre HTTPS
+    @property
+    def archivo_url_https(self):
+        if self.archivo:
+            url = self.archivo.url
+            return url.replace("http://", "https://")
+        return None
+
     class Meta:
-        managed=True
+        managed = True
         db_table = 'documento'
+
 
 
 class Empleado(models.Model): 

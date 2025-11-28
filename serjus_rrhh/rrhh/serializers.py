@@ -105,13 +105,13 @@ class DocumentoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_archivo_url(self, obj):
+        if not obj.archivo:
+            return None
+
         request = self.context.get('request')
-        if obj.archivo and request:
-            return request.build_absolute_uri(obj.archivo.url)
-        elif obj.archivo:
-            return obj.archivo.url 
-        return None
-    
+        url = request.build_absolute_uri(obj.archivo.url) if request else obj.archivo.url
+        return url.replace("http://", "https://")  # 🔥 fuerza HTTPS
+
     def update(self, instance, validated_data):
         request = self.context.get('request')
 
@@ -120,19 +120,19 @@ class DocumentoSerializer(serializers.ModelSerializer):
             if instance.archivo:
                 instance.archivo.delete(save=False)
             instance.archivo = None
-            # Si se borra archivo, ponemos marcadores simples
             instance.mimearchivo = "-----"
             instance.nombrearchivo = f"{instance.nombrearchivo} (archivo eliminado)"
 
-        # Si se sube un nuevo archivo
+        # Si se sube nuevo archivo
         if 'archivo' in validated_data:
             instance.archivo = validated_data.get('archivo')
 
-        # Asegurar que mimearchivo no quede vacío
+        # Mantener mimearchivo siempre presente
         if not validated_data.get('mimearchivo'):
             validated_data['mimearchivo'] = '-----'
 
         return super().update(instance, validated_data)
+
 
 class EquipoSerializer(serializers.ModelSerializer):
     class Meta:

@@ -8,6 +8,9 @@ from .models import (
     Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, 
     Estado, Pueblocultura, Postulacion, Variable, Tipoevaluacion, Seguimiento, Seguimientovariable
 )
+from .models import Formulario, Pregunta, Opcion, FormularioRespuesta, Respuesta, InduccionFormulario
+
+
 class EstadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Estado
@@ -110,7 +113,7 @@ class DocumentoSerializer(serializers.ModelSerializer):
 
         request = self.context.get('request')
         url = request.build_absolute_uri(obj.archivo.url) if request else obj.archivo.url
-        return url.replace("http://", "https://")  # 🔥 fuerza HTTPS
+        return url.replace("http://", "http://")  # 🔥 fuerza HTTPS
 
     def update(self, instance, validated_data):
         request = self.context.get('request')
@@ -153,9 +156,34 @@ class IdiomaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class InduccionSerializer(serializers.ModelSerializer):
+    formulario_respondido = serializers.SerializerMethodField()
+
     class Meta:
         model = Induccion
         fields = '__all__'
+
+    def get_formulario_respondido(self, obj):
+        request = self.context.get('request')
+        user = request.user
+
+        empleado = Empleado.objects.filter(usuario=user).first()
+
+        if not empleado:
+            print("❌ NO SE ENCONTRÓ EMPLEADO")
+            return False
+
+        formularios_ids = InduccionFormulario.objects.filter(
+            idinduccion=obj,
+            estado=True
+        ).values_list('idformulario', flat=True)
+
+        existe = FormularioRespuesta.objects.filter(
+            idformulario__in=formularios_ids,
+            idempleado=empleado,
+            estado=True
+        ).exists()
+
+        return existe
 
 class InducciondocumentoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -224,4 +252,181 @@ class TipoevaluacionSerializer(serializers.ModelSerializer):
 class VariableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Variable
+        fields = '__all__'
+
+#######################################################
+#Induccion Formulario
+class OpcionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Opcion
+        fields = ['idopcion', 'texto', 'estado', 'orden']
+        extra_kwargs = {
+            'idpregunta': {'required': False}
+        }
+
+class PreguntaSerializer(serializers.ModelSerializer):
+    opciones = OpcionSerializer(source='opcion_set', many=True, required=False)
+
+    class Meta:
+        model = Pregunta
+        fields = ['idpregunta', 'texto', 'tipo', 'opciones']
+
+class PreguntaCreateSerializer(serializers.ModelSerializer):
+    opcion_set = OpcionSerializer(many=True, required=False)
+
+    class Meta:
+        model = Pregunta
+        fields = ['texto', 'tipo', 'estado', 'idusuario', 'orden', 'opcion_set']
+        extra_kwargs = {
+            'texto': {'required': True},
+            'tipo': {'required': True},
+        }
+
+class FormularioSerializer(serializers.ModelSerializer):
+    preguntas = PreguntaSerializer(source='pregunta_set', many=True, read_only=True)
+
+    class Meta:
+        model = Formulario
+        fields = '__all__'
+
+    def get_preguntas(self, obj):
+        preguntas = obj.pregunta_set.all().order_by('orden')
+        return PreguntaSerializer(preguntas, many=True).data
+
+class FormularioCreateSerializer(serializers.ModelSerializer):
+    preguntas = PreguntaCreateSerializer(many=True, write_only=True, required=False)
+
+    class Meta:
+        model = Formulario
+        fields = '__all__'
+
+    def validate(self, data):
+        idformulario = data.get('idformulario')
+        idempleado = data.get('idempleado')
+
+        existe = FormularioRespuesta.objects.filter(
+            idformulario=idformulario,
+            idempleado=idempleado
+        ).exists()
+
+        if existe:
+            raise serializers.ValidationError(
+                "Este formulario ya fue respondido por este empleado."
+            )
+
+        return data
+
+    def update(self, instance, validated_data):
+        print("VALIDATED DATA:", validated_data)
+        preguntas_data = validated_data.pop('preguntas', None)
+
+        # actualizar formulario
+        instance.titulo = validated_data.get('titulo', instance.titulo)
+        instance.descripcion = validated_data.get('descripcion', instance.descripcion)
+        instance.estado = validated_data.get('estado', instance.estado)
+        instance.idusuario = validated_data.get('idusuario', instance.idusuario)
+        instance.save()
+
+        # 🔥 SOLO si vienen preguntas, se reemplazan
+        if preguntas_data is not None:
+            Opcion.objects.filter(idpregunta__idformulario=instance).delete()
+            instance.pregunta_set.all().delete()
+
+            for i, pregunta_data in enumerate(preguntas_data):
+                opciones_data = pregunta_data.pop('opcion_set', [])
+
+                pregunta = Pregunta.objects.create(
+                    idformulario=instance,
+                    orden=pregunta_data.get('orden', i + 1),
+                    texto=pregunta_data['texto'],
+                    tipo=pregunta_data['tipo'],
+                    estado=pregunta_data.get('estado', True),
+                    idusuario=pregunta_data['idusuario']
+                )
+
+                for j, opcion in enumerate(opciones_data):
+                    Opcion.objects.create(
+                        idpregunta=pregunta,
+                        texto=opcion['texto'],
+                        estado=opcion.get('estado', True),
+                        orden=opcion.get('orden', j + 1)
+                    )
+
+        return instance
+
+    def create(self, validated_data):
+        print("VALIDATED DATA:", validated_data)
+        preguntas_data = validated_data.pop('preguntas', [])
+        formulario = Formulario.objects.create(**validated_data)
+
+        for i, pregunta_data in enumerate(preguntas_data):
+            opciones_data = pregunta_data.pop('opcion_set', [])
+
+            # 🔥 DEBUG (te recomiendo dejarlo)
+            print("PREGUNTA DATA:", pregunta_data)
+
+            pregunta = Pregunta.objects.create(
+                idformulario=formulario,
+                orden=pregunta_data.get('orden', i + 1),
+                texto=pregunta_data['texto'],
+                tipo=pregunta_data['tipo'],
+                estado=pregunta_data.get('estado', True),
+                idusuario=pregunta_data['idusuario']  # 👈 ahora sí seguro viene
+            )
+
+            for j, opcion in enumerate(opciones_data):
+                Opcion.objects.create(
+                    idpregunta=pregunta,
+                    texto=opcion['texto'],
+                    estado=opcion.get('estado', True),
+                    orden=opcion.get('orden', j + 1)
+                )
+
+        return formulario
+
+class RespuestaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Respuesta
+        fields = '__all__'
+
+    def get_opciones(self, obj):
+        opciones = obj.opcion_set.all().order_by('orden')
+        return OpcionSerializer(opciones, many=True).data
+
+class FormularioRespuestaSerializer(serializers.ModelSerializer):
+    respuestas = RespuestaSerializer(source='respuesta_set', many=True, read_only=True)
+
+    class Meta:
+        model = FormularioRespuesta
+        fields = '__all__'
+
+class RespuestaCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Respuesta
+        fields = ['idpregunta', 'respuesta_texto', 'idopcion']
+
+class FormularioRespuestaCreateSerializer(serializers.ModelSerializer):
+    respuestas = RespuestaCreateSerializer(many=True, write_only=True)
+
+    class Meta:
+        model = FormularioRespuesta
+        fields = '__all__'
+
+    def create(self, validated_data):
+        print("VALIDATED DATA:", validated_data)
+        respuestas_data = validated_data.pop('respuestas', [])
+
+        formulario_respuesta = FormularioRespuesta.objects.create(**validated_data)
+
+        for respuesta_data in respuestas_data:
+            Respuesta.objects.create(
+                idformulariorespuesta=formulario_respuesta,
+                **respuesta_data
+            )
+
+        return formulario_respuesta
+    
+class InduccionFormularioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InduccionFormulario
         fields = '__all__'

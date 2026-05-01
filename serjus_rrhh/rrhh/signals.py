@@ -70,6 +70,8 @@ def create_default_admin_and_data(sender, **kwargs):
         "CONTRATO",
         "RECONOCIMIENTO",
         "TERMINACIÓN DE LABORAL",
+        "DOCUMENTO INDUCCION",
+        "DIPLOMA"
     ]
     for nombre in documentos_por_defecto:
         Tipodocumento.objects.get_or_create(

@@ -9,6 +9,8 @@ import shutil
 from rest_framework.permissions import IsAuthenticated
 from rrhh.authentication import BearerAuthentication
 from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
 
 from .models import (
     Empleado, Amonestacion, Aspirante,
@@ -17,7 +19,7 @@ from .models import (
     Equipo, Historialpuesto, Idioma,
     Induccion, Inducciondocumento, Puesto, Rol,
     Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterio, Capacitacion, Postulacion, Variable,
-    Seguimientovariable, Seguimiento, Tipoevaluacion
+    Seguimientovariable, Seguimiento, Tipoevaluacion, InduccionFormulario
 )
 
 from .serializers import (
@@ -28,6 +30,19 @@ from .serializers import (
     InduccionSerializer, InducciondocumentoSerializer, PuestoSerializer, RolSerializer,
     TerminacionlaboralSerializer, TipodocumentoSerializer, UsuarioSerializer, EstadoSerializer, PuebloSerializer, CriterioSerializer,
     PostulacionSerializer, VariableSerializer, SeguimientoVariableSerializer, SeguimientoSerializer, TipoevaluacionSerializer
+)
+
+from .models import Formulario, Pregunta, Opcion, FormularioRespuesta, Respuesta
+
+from .serializers import (
+    FormularioSerializer,
+    FormularioCreateSerializer,
+    FormularioRespuestaSerializer,
+    FormularioRespuestaCreateSerializer,
+    RespuestaSerializer,
+    PreguntaSerializer,
+    OpcionSerializer,
+    InduccionFormularioSerializer
 )
 
 @extend_schema_view(
@@ -44,17 +59,61 @@ class PostulacionViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'put', 'post', 'delete']
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        if Postulacion.objects.filter(
-            idaspirante=data.get("idaspirante"),
-            idconvocatoria=data.get("idconvocatoria")
-        ).exists():
-            return Response(
-                {"error": "El aspirante ya está postulado a esta convocatoria"},
-                status=status.HTTP_400_BAD_REQUEST
+        dpi = request.data.get("dpi")
+
+        aspirante_existente = Aspirante.objects.filter(dpi=dpi).first()
+
+        if aspirante_existente:
+            # 🔄 OPCIÓN 1: actualizar datos
+            serializer = self.get_serializer(
+                aspirante_existente,
+                data=request.data,
+                partial=True
             )
-        
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # 🆕 Si no existe, crear nuevo
         return super().create(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['get'], url_path='por-dpi')
+    def por_dpi(self, request):
+        dpi = request.query_params.get("dpi")
+
+        if not dpi:
+            return Response({"error": "Debe enviar el DPI"}, status=400)
+
+        aspirante = Aspirante.objects.filter(dpi=dpi).first()
+
+        if not aspirante:
+            return Response({"error": "Aspirante no encontrado"}, status=404)
+
+        postulaciones = Postulacion.objects.filter(
+            idaspirante=aspirante
+        ).select_related("idconvocatoria", "idestado", "idconvocatoria__idpuesto")
+
+        data = []
+        for p in postulaciones:
+            convocatoria = p.idconvocatoria
+            estado = p.idestado
+
+            data.append({
+                "convocatoria": convocatoria.nombreconvocatoria if convocatoria else "",
+                "puesto": (
+                    convocatoria.idpuesto.nombrepuesto
+                    if convocatoria and convocatoria.idpuesto else ""
+                ),
+                "fecha": p.fechapostulacion,
+                "estado": estado.nombreestado if estado else ""
+            })
+
+        return Response({
+            "aspirante": f"{aspirante.nombreaspirante} {aspirante.apellidoaspirante}",
+            "dpi": aspirante.dpi,
+            "postulaciones": data
+        })
     
 @extend_schema_view(
     list=extend_schema(tags=["Aspirante"]),
@@ -579,3 +638,235 @@ def listar_convocatorias(request):
     convocatorias = Convocatoria.objects.all().order_by('-idconvocatoria')
     serializer = ConvocatoriaSerializer(convocatorias, many=True)
     return Response(serializer.data)
+
+############################################################################
+#Induccion Formulario
+@extend_schema_view(
+    list=extend_schema(tags=["Formulario"]),
+    retrieve=extend_schema(tags=["Formulario"]),
+    create=extend_schema(tags=["Formulario"]),
+)
+class FormularioViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'put', 'patch']
+    queryset = Formulario.objects.all().order_by('-idformulario')
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return FormularioCreateSerializer
+        return FormularioSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        # 🔥 AQUÍ ESTÁ EL DEBUG REAL
+        if not serializer.is_valid():
+            print("ERRORES DEL SERIALIZER:", serializer.errors)
+            print("DATA QUE LLEGA:", request.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+@extend_schema_view(
+    list=extend_schema(tags=["Formulario Respuesta"]),
+    retrieve=extend_schema(tags=["Formulario Respuesta"]),
+    create=extend_schema(tags=["Formulario Respuesta"]),
+)
+class FormularioRespuestaViewSet(viewsets.ModelViewSet):
+    queryset = FormularioRespuesta.objects.all().order_by('-idformulariorespuesta')
+    permission_classes = [AllowAny]
+    http_method_names = ['get', 'post', 'put']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return FormularioRespuestaCreateSerializer
+        return FormularioRespuestaSerializer
+    
+    def create(self, request, *args, **kwargs):
+        if not request.data.get("idempleado") and not request.data.get("idusuario"):
+            return Response(
+                {"error": "Debe enviar idempleado o idusuario"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().create(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['get'], url_path='por-empleado')
+    def por_empleado(self, request):
+        idempleado = request.query_params.get('idempleado')
+
+        if not idempleado:
+            return Response({"error": "Debe enviar idempleado"}, status=400)
+
+        respuestas = FormularioRespuesta.objects.filter(idempleado=idempleado)
+        serializer = self.get_serializer(respuestas, many=True)
+
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['put'], url_path='calificar')
+    def calificar(self, request, pk=None):
+        formulario_respuesta = self.get_object()
+        respuestas = request.data.get('respuestas', [])
+        total = 0
+
+        for r in respuestas:
+            respuesta = Respuesta.objects.get(idrespuesta=r.get('idrespuesta'))
+            puntaje = r.get('puntaje', 0)
+            comentario = r.get('comentario', '')
+
+            respuesta.puntaje = puntaje
+            respuesta.comentario = comentario
+            respuesta.save()
+
+            total += float(puntaje)
+
+        formulario_respuesta.calificacion_total = total
+        formulario_respuesta.revisado = True
+        formulario_respuesta.save()
+
+        return Response({
+            "mensaje": "Formulario calificado correctamente",
+            "total": total
+        })
+    
+    @action(detail=True, methods=['get'], url_path='detalle')
+    def detalle(self, request, pk=None):
+        formulario_respuesta = self.get_object()
+        serializer = FormularioRespuestaSerializer(formulario_respuesta)
+        return Response(serializer.data)
+    
+class PreguntaViewSet(viewsets.ModelViewSet):
+    queryset = Pregunta.objects.all()
+    serializer_class = PreguntaSerializer
+    permission_classes = [AllowAny]
+
+class OpcionViewSet(viewsets.ModelViewSet):
+    queryset = Opcion.objects.all()
+    serializer_class = OpcionSerializer
+    permission_classes = [AllowAny]
+
+class InduccionFormularioViewSet(viewsets.ModelViewSet):
+    queryset = InduccionFormulario.objects.all()
+    serializer_class = InduccionFormularioSerializer
+    permission_classes = [AllowAny]
+
+##########################################################
+#Respuesta de Formularios
+@api_view(['GET'])
+def respuestas_por_induccion(request, idinduccion):
+
+    respuestas = FormularioRespuesta.objects.filter(
+        idformulario__induccionformulario__idinduccion=idinduccion,
+        estado=True
+    ).select_related('idempleado')
+
+    data = []
+
+    for fr in respuestas:
+        empleado = fr.idempleado
+
+        if not empleado:
+            continue
+
+        data.append({
+            "idformulariorespuesta": fr.idformulariorespuesta,
+            "idempleado": empleado.idempleado,
+            "nombre": f"{empleado.nombre} {empleado.apellido}"
+        })
+
+    return Response(data)
+
+@api_view(['GET'])
+def detalle_respuesta(request, idformulariorespuesta):
+
+    fr = get_object_or_404(FormularioRespuesta, pk=idformulariorespuesta)
+
+    respuestas = fr.respuesta_set.select_related('idpregunta', 'idopcion')
+
+    data = {
+        "idformulariorespuesta": fr.idformulariorespuesta,
+        "empleado": f"{fr.idempleado.nombre} {fr.idempleado.apellido}",
+        "respuestas": []
+    }
+
+    for r in respuestas:
+        data["respuestas"].append({
+            "idrespuesta": r.idrespuesta,  # 👈 CLAVE
+            "pregunta": r.idpregunta.texto,
+            "respuesta": (
+                r.respuesta_texto
+                if r.respuesta_texto
+                else r.idopcion.texto if r.idopcion else ""
+            ),
+            "comentario": r.comentario or ""  # 👈 opcional (para editar)
+        })
+
+    return Response(data)
+
+@api_view(['GET'])
+def mi_respuesta(request, idinduccion, idempleado):
+
+    # 🔹 1. Buscar formulario asignado a la inducción
+    asignacion = InduccionFormulario.objects.filter(
+        idinduccion=idinduccion,
+        estado=True
+    ).first()
+
+    if not asignacion:
+        return Response({"error": "No hay formulario asignado"}, status=404)
+
+    # 🔹 2. Buscar respuesta del empleado
+    fr = FormularioRespuesta.objects.filter(
+        idformulario=asignacion.idformulario,
+        idempleado=idempleado
+    ).first()
+
+    if not fr:
+        return Response({"error": "No ha respondido"}, status=404)
+
+    respuestas = fr.respuesta_set.select_related('idpregunta', 'idopcion')
+
+    data = {
+        "idformulariorespuesta": fr.idformulariorespuesta,
+        "respuestas": []
+    }
+
+    for r in respuestas:
+        data["respuestas"].append({
+            "pregunta": r.idpregunta.texto,
+            "respuesta": r.respuesta_texto or (r.idopcion.texto if r.idopcion else ""),
+            "comentario": r.comentario or ""
+        })
+
+    return Response(data)
+
+###########################################################################################
+#Periodo de Prueba
+@api_view(['GET'])
+def evaluacion_periodo_prueba(request):
+    tipo = Tipoevaluacion.objects.filter(
+        nombretipo="PeriodoDePrueba"
+    ).first()
+
+    if not tipo:
+        return Response([])
+
+    variables = Variable.objects.filter(idtipoevaluacion=tipo)
+
+    data = []
+    for v in variables:
+        criterios = Criterio.objects.filter(idvariable=v)
+
+        data.append({
+            "variable": v.nombrevariable,
+            "criterios": [
+                {
+                    "idcriterio": c.idcriterio,
+                    "nombre": c.nombrecriterio
+                }
+                for c in criterios
+            ]
+        })
+
+    return Response(data)

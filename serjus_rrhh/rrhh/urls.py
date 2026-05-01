@@ -14,6 +14,8 @@ from .viewspersonalizadas import  login_usuario
 
 from django.conf import settings
 from django.conf.urls.static import static
+from .views import FormularioViewSet, FormularioRespuestaViewSet, PreguntaViewSet, OpcionViewSet, InduccionFormularioViewSet
+from .views import respuestas_por_induccion, detalle_respuesta, mi_respuesta, evaluacion_periodo_prueba
 
 router = routers.DefaultRouter()
 router.register(r'criterio', CriterioViewSet)
@@ -46,11 +48,25 @@ router.register(r'seguimientovariable', SeguimientoVariableViewSet)
 router.register(r'seguimientos', SeguimientoViewSet)
 router.register(r'tipoevaluacion', TipoevaluacionViewSet)
 
+##################################################################
+#Formulario Induccion
+router.register(r'formularios', FormularioViewSet)
+router.register(r'formulario-respuestas', FormularioRespuestaViewSet)
+router.register(r'preguntas', PreguntaViewSet)
+router.register(r'opciones', OpcionViewSet)
+router.register(r'induccion-formulario', InduccionFormularioViewSet)
+
+##################################################################
+
 urlpatterns = [
     path('', include(router.urls)),  
     path('login/', login_usuario),
     path('postulaciones/limpiar/<int:idconvocatoria>/', limpiar_postulaciones),
     path('convocatorias/', listar_convocatorias),   
+    path('respuestas-induccion/<int:idinduccion>/', respuestas_por_induccion),
+    path('detalle-respuesta/<int:idformulariorespuesta>/', detalle_respuesta),
+    path('mi-respuesta/<int:idinduccion>/<int:idempleado>/', mi_respuesta),
+    path('evaluacion-periodo-prueba/', evaluacion_periodo_prueba)
 ]
 
 if settings.DEBUG:

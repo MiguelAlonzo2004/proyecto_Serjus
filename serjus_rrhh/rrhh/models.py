@@ -118,7 +118,7 @@ class Convocatoria(models.Model):
     idconvocatoria = models.AutoField(db_column='idConvocatoria', primary_key=True)  # Field name made lowercase.
     idpuesto = models.ForeignKey('Puesto', models.DO_NOTHING, db_column='idPuesto', blank=True, null=True)  # Field name made lowercase.
     nombreconvocatoria = models.CharField(db_column='nombreConvocatoria', max_length=500)  # Field name made lowercase.
-    descripcion = models.CharField(max_length=5000)
+    descripcion = models.TextField(null=True, blank=True)
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     fechafin = models.DateField(db_column='fechaFin')  # Field name made lowercase.
     idestado = models.ForeignKey('Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True)
@@ -202,7 +202,7 @@ class Documento(models.Model):
     def archivo_url_https(self):
         if self.archivo:
             url = self.archivo.url
-            return url.replace("http://", "https://")
+            return url.replace("http://", "http://")
         return None
 
     class Meta:
@@ -216,8 +216,8 @@ class Empleado(models.Model):
     idaspirante = models.ForeignKey(Aspirante, models.DO_NOTHING, db_column='idAspirante', blank=True, null=True)
     dpi = models.CharField(max_length=13, unique=True)
     nit = models.CharField(max_length=9)
-    nombre = models.CharField(max_length=20)
-    apellido = models.CharField(max_length=20)
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
     genero = models.CharField(max_length=10)
     lugarnacimiento = models.CharField(db_column='lugarNacimiento', max_length=100)
     fechanacimiento = models.DateField(db_column='fechaNacimiento')
@@ -235,7 +235,7 @@ class Empleado(models.Model):
     numeroiggs = models.CharField(db_column='numeroIggs', max_length=50, blank=True, null=True)
     idequipo = models.ForeignKey('Equipo', models.DO_NOTHING, db_column='idEquipo', blank=True, null=True)
     idpuesto = models.ForeignKey('Puesto', models.DO_NOTHING, db_column='idPuesto', blank=True, null=True)
-    inicioLaboral = models.DateTimeField(db_column='inicioLaboral', auto_now_add=True, blank=True, null=True)
+    inicioLaboral = models.DateTimeField(db_column='inicioLaboral', blank=True, null=True)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -542,6 +542,10 @@ class Usuario(models.Model):
         managed=True
         db_table = 'usuario'
 
+    @property
+    def is_authenticated(self):
+        return True
+
 
 class Variable(models.Model):
     idvariable = models.AutoField(db_column='idVariable', primary_key=True)
@@ -555,3 +559,112 @@ class Variable(models.Model):
     class Meta:
         managed = True
         db_table = 'variable'
+
+################################################################################
+#Induccion Formulario
+class Formulario(models.Model):
+    idformulario = models.AutoField(db_column='idFormulario', primary_key=True)
+    idinduccion = models.ForeignKey(
+        Induccion, models.DO_NOTHING, db_column='idInduccion', blank=True, null=True
+    )
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, null=True)
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'formulario'
+
+class Pregunta(models.Model):
+    TIPO_PREGUNTA = (
+        ('abierta', 'Abierta'),
+        ('opcion_multiple', 'Opción múltiple'),
+    )
+
+    idpregunta = models.AutoField(db_column='idPregunta', primary_key=True)
+    idformulario = models.ForeignKey(Formulario, models.DO_NOTHING, db_column='idFormulario')
+    texto = models.TextField()
+    tipo = models.CharField(max_length=20, choices=TIPO_PREGUNTA)
+    orden = models.IntegerField()  # para ordenarlas
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'pregunta'
+
+class Opcion(models.Model):
+    idopcion = models.AutoField(db_column='idOpcion', primary_key=True)
+    idpregunta = models.ForeignKey(Pregunta, models.DO_NOTHING, db_column='idPregunta')
+    texto = models.CharField(max_length=300)
+    orden = models.IntegerField(default=1)
+    es_correcta = models.BooleanField(default=False)  # opcional (si quieres evaluar)
+    estado = models.BooleanField(default=True)
+
+    class Meta:
+        managed = True
+        db_table = 'opcion'
+
+class InduccionFormulario(models.Model):
+    id = models.AutoField(primary_key=True)
+    idinduccion = models.ForeignKey(Induccion, models.DO_NOTHING)
+    idformulario = models.ForeignKey(Formulario, models.DO_NOTHING)
+    fechaasignado = models.DateField()
+    estado = models.BooleanField(default=True)
+
+class FormularioRespuesta(models.Model):
+    idformulariorespuesta = models.AutoField(db_column='idFormularioRespuesta', primary_key=True)
+    
+    idformulario = models.ForeignKey(Formulario, models.DO_NOTHING, db_column='idFormulario')
+    
+    # Relación flexible (elige uno)
+    idempleado = models.ForeignKey(Empleado, models.DO_NOTHING, db_column='idEmpleado', blank=True, null=True)
+    idusuario = models.ForeignKey(Usuario, models.DO_NOTHING, db_column='idUsuario', blank=True, null=True)
+
+    fecha_respuesta = models.DateTimeField(auto_now_add=True)
+    
+    calificacion_total = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    observacion = models.TextField(blank=True, null=True)
+
+    revisado = models.BooleanField(default=False)  # 👈 clave para saber si ya calificaron
+    estado = models.BooleanField(default=True)
+
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'formulario_respuesta'
+        unique_together = ('idformulario', 'idempleado')
+
+class Respuesta(models.Model):
+    idrespuesta = models.AutoField(db_column='idRespuesta', primary_key=True)
+
+    idformulariorespuesta = models.ForeignKey(
+        FormularioRespuesta, models.DO_NOTHING, db_column='idFormularioRespuesta'
+    )
+
+    idpregunta = models.ForeignKey(Pregunta, models.DO_NOTHING, db_column='idPregunta')
+
+    # Para preguntas abiertas
+    respuesta_texto = models.TextField(blank=True, null=True)
+
+    # Para opción múltiple (opcional)
+    idopcion = models.ForeignKey(Opcion, models.DO_NOTHING, db_column='idOpcion', blank=True, null=True)
+
+    # 👇 Calificación manual por pregunta
+    puntaje = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    comentario = models.TextField(blank=True, null=True)
+
+    estado = models.BooleanField(default=True)
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'respuesta'

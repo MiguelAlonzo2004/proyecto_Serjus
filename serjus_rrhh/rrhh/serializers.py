@@ -6,9 +6,9 @@ from .models import (
     Ausencia, Contrato, Convocatoria, Documento, 
     Equipo, Historialpuesto, Idioma, 
     Induccion, Inducciondocumento, Puesto, Rol, Terminacionlaboral, Tipodocumento, Usuario, 
-    Estado, Pueblocultura, Postulacion, Variable, Tipoevaluacion, Seguimiento, Seguimientovariable
+    Estado, Pueblocultura, Postulacion, Variable, Tipoevaluacion, Seguimiento, Seguimientovariable, InformeCapacitacion, InformeCapacitacionDocumento
 )
-from .models import Formulario, Pregunta, Opcion, FormularioRespuesta, Respuesta, InduccionFormulario
+from .models import Formulario, Pregunta, Opcion, FormularioRespuesta, Respuesta, InduccionFormulario, FichaMedica, EvaluacionGlobal
 
 
 class EstadoSerializer(serializers.ModelSerializer):
@@ -266,10 +266,19 @@ class OpcionSerializer(serializers.ModelSerializer):
 
 class PreguntaSerializer(serializers.ModelSerializer):
     opciones = OpcionSerializer(source='opcion_set', many=True, required=False)
+    iddimension = serializers.SerializerMethodField()
 
     class Meta:
         model = Pregunta
-        fields = ['idpregunta', 'texto', 'tipo', 'opciones']
+        fields = ['idpregunta', 'texto', 'tipo', 'opciones', 'iddimension']
+
+    def get_iddimension(self, obj):
+        if obj.iddimension:
+            return {
+                "id": obj.iddimension.iddimension,
+                "nombre": obj.iddimension.nombre
+            }
+        return None
 
 class PreguntaCreateSerializer(serializers.ModelSerializer):
     opcion_set = OpcionSerializer(many=True, required=False)
@@ -429,4 +438,48 @@ class FormularioRespuestaCreateSerializer(serializers.ModelSerializer):
 class InduccionFormularioSerializer(serializers.ModelSerializer):
     class Meta:
         model = InduccionFormulario
+        fields = '__all__'
+
+######################################################################
+#Ficha Medica.
+class FichaMedicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FichaMedica
+        fields = '__all__'
+
+#####################################################################
+#Evaluacion Global
+class EvaluacionGlobalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvaluacionGlobal
+        fields = '__all__'
+
+####################################################################
+#Informes de Capacitacion
+class InformeCapacitacionDocumentoSerializer(serializers.ModelSerializer):
+
+    nombre_documento = serializers.CharField(
+        source='iddocumento.nombrearchivo',
+        read_only=True
+    )
+
+    archivo = serializers.FileField(
+        source='iddocumento.archivo',
+        read_only=True
+    )
+
+    class Meta:
+        model = InformeCapacitacionDocumento
+        fields = '__all__'
+
+
+class InformeCapacitacionSerializer(serializers.ModelSerializer):
+
+    documentos = InformeCapacitacionDocumentoSerializer(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = InformeCapacitacion
         fields = '__all__'

@@ -11,6 +11,10 @@ from rrhh.authentication import BearerAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from django.db.models import Max
+from django.db import transaction
+from datetime import datetime
+from django.db.models import Count
 
 from .models import (
     Empleado, Amonestacion, Aspirante,
@@ -19,7 +23,8 @@ from .models import (
     Equipo, Historialpuesto, Idioma,
     Induccion, Inducciondocumento, Puesto, Rol,
     Terminacionlaboral, Tipodocumento, Usuario, Estado, Pueblocultura, Criterio, Capacitacion, Postulacion, Variable,
-    Seguimientovariable, Seguimiento, Tipoevaluacion, InduccionFormulario
+    Seguimientovariable, Seguimiento, Tipoevaluacion, InduccionFormulario, EnfermedadDetalle, RegistroEnfermedades, EvaluacionGlobal,
+    InformeCapacitacionDocumento, InformeCapacitacion
 )
 
 from .serializers import (
@@ -29,7 +34,8 @@ from .serializers import (
     EquipoSerializer, HistorialpuestoSerializer, IdiomaSerializer,
     InduccionSerializer, InducciondocumentoSerializer, PuestoSerializer, RolSerializer,
     TerminacionlaboralSerializer, TipodocumentoSerializer, UsuarioSerializer, EstadoSerializer, PuebloSerializer, CriterioSerializer,
-    PostulacionSerializer, VariableSerializer, SeguimientoVariableSerializer, SeguimientoSerializer, TipoevaluacionSerializer
+    PostulacionSerializer, VariableSerializer, SeguimientoVariableSerializer, SeguimientoSerializer, TipoevaluacionSerializer, EvaluacionGlobalSerializer,
+    InformeCapacitacionSerializer, InformeCapacitacionDocumentoSerializer
 )
 
 from .models import Formulario, Pregunta, Opcion, FormularioRespuesta, Respuesta
@@ -844,29 +850,423 @@ def mi_respuesta(request, idinduccion, idempleado):
 ###########################################################################################
 #Periodo de Prueba
 @api_view(['GET'])
-def evaluacion_periodo_prueba(request):
-    tipo = Tipoevaluacion.objects.filter(
-        nombretipo="PeriodoDePrueba"
-    ).first()
-
-    if not tipo:
-        return Response([])
-
-    variables = Variable.objects.filter(idtipoevaluacion=tipo)
+def obtener_evaluacion_periodo_prueba_acompanantes(request):
+    variables = Variable.objects.filter(
+        idtipoevaluacion__nombretipo__iexact="Periodo de prueba acompañantes"
+    ).prefetch_related('criterio_set')
 
     data = []
+
     for v in variables:
-        criterios = Criterio.objects.filter(idvariable=v)
+        criterios = v.criterio_set.filter(estado=True)  # 🔥 filtro importante
 
         data.append({
-            "variable": v.nombrevariable,
+            "idvariable": v.idvariable,
+            "nombrevariable": v.nombrevariable,
             "criterios": [
                 {
                     "idcriterio": c.idcriterio,
-                    "nombre": c.nombrecriterio
+                    "nombrecriterio": c.nombrecriterio
+                }
+                for c in criterios
+            ]
+        })
+    
+    print("VARIABLES:", variables.count())
+    for v in variables:
+        print("VAR:", v.nombrevariable, "CRITERIOS:", v.criterio_set.count())
+
+    return Response(data)
+
+@api_view(['GET'])
+def obtener_evaluacion_periodo_prueba_coordinacion(request):
+
+    variables = Variable.objects.filter(
+        idtipoevaluacion__nombretipo__iexact="Periodo de prueba coordinaciones"
+    ).prefetch_related('criterio_set')
+
+    data = []
+
+    for v in variables:
+
+        criterios = v.criterio_set.filter(
+            estado=True
+        )
+
+        data.append({
+            "idvariable": v.idvariable,
+            "nombrevariable": v.nombrevariable,
+
+            "criterios": [
+                {
+                    "idcriterio": c.idcriterio,
+                    "nombrecriterio": c.nombrecriterio
                 }
                 for c in criterios
             ]
         })
 
+    print(
+        "VARIABLES:",
+        variables.count()
+    )
+
+    for v in variables:
+
+        print(
+            "VAR:",
+            v.nombrevariable,
+            "CRITERIOS:",
+            v.criterio_set.count()
+        )
+
     return Response(data)
+
+##############################################################################
+#Ficha Medica
+from .models import FichaMedica, Empleado
+
+@api_view(['POST'])
+def guardar_ficha_medica(request):
+
+    idempleado = request.data.get('idempleado')
+    peso = request.data.get('peso')
+    estatura = request.data.get('estatura')
+
+    try:
+        empleado = Empleado.objects.get(idempleado=idempleado)
+    except Empleado.DoesNotExist:
+        return Response({'error': 'Empleado no existe'}, status=404)
+
+    ficha = FichaMedica.objects.create(
+        idempleado=empleado,
+        peso=peso,
+        estatura=estatura
+    )
+
+    return Response({
+        'mensaje': 'Ficha médica guardada',
+        'idficha': ficha.idficha
+    })
+
+@api_view(['GET'])
+def ultima_ficha(request, idempleado):
+
+    ficha = FichaMedica.objects.filter(
+        idempleado=idempleado
+    ).order_by('-fecha_registro').first()
+
+    if not ficha:
+        return Response({'mensaje': 'Sin ficha'}, status=404)
+
+    return Response({
+        'peso': ficha.peso,
+        'estatura': ficha.estatura
+    })
+    
+
+@api_view(['POST'])
+def guardar_encuesta_completa(request):
+
+    try:
+        with transaction.atomic():  # 🔥 TODO o NADA
+
+            # 🔹 1. Obtener datos
+            idempleado = request.data.get('idempleado')
+            idformulario = request.data.get('idformulario')
+            peso = request.data.get('peso')
+            estatura = request.data.get('estatura')
+            respuestas = request.data.get('respuestas', [])
+
+            # 🔹 2. Validaciones básicas
+            if not idempleado or not idformulario:
+                return Response({'error': 'Faltan datos'}, status=400)
+
+            if not isinstance(respuestas, list):
+                return Response({'error': 'Formato de respuestas inválido'}, status=400)
+
+            # 🔹 3. Obtener objetos
+            empleado = Empleado.objects.get(idempleado=idempleado)
+            formulario = Formulario.objects.get(idformulario=idformulario)
+
+            # 🔥 4. VALIDACIÓN DE REGLAS DE NEGOCIO
+            if formulario.tipo == 'induccion':
+
+                existe = FormularioRespuesta.objects.filter(
+                    idformulario=formulario,
+                    idempleado=empleado
+                ).exists()
+
+                if existe:
+                    return Response({
+                        'error': 'Este formulario de inducción ya fue respondido'
+                    }, status=400)
+
+            elif formulario.tipo == 'medico':
+
+                año_actual = datetime.now().year
+
+                # 🔥 BORRAR SOLO LA DEL MISMO AÑO
+                FormularioRespuesta.objects.filter(
+                    idformulario=formulario,
+                    idempleado=empleado,
+                    fecha_respuesta__year=año_actual
+                ).delete()
+
+            # 🔥 5. GUARDAR FICHA MÉDICA
+            if peso and estatura:
+                FichaMedica.objects.create(
+                    idempleado=empleado,
+                    peso=peso,
+                    estatura=estatura
+                )
+
+            # 🔥 6. CREAR FORMULARIO RESPUESTA
+            formulario_respuesta = FormularioRespuesta.objects.create(
+                idformulario=formulario,
+                idempleado=empleado
+            )
+
+            # 🔥 7. GUARDAR RESPUESTAS
+            for r in respuestas:
+
+                pregunta = Pregunta.objects.get(idpregunta=r.get('idpregunta'))
+
+                opcion = None
+                if r.get('idopcion'):
+                    opcion = Opcion.objects.get(idopcion=r.get('idopcion'))
+
+                Respuesta.objects.create(
+                    idformulariorespuesta=formulario_respuesta,
+                    idpregunta=pregunta,
+                    respuesta_texto=r.get('respuesta_texto'),
+                    idopcion=opcion
+                )
+
+            return Response({
+                'mensaje': 'Encuesta guardada correctamente',
+                'idrespuesta': formulario_respuesta.idformulariorespuesta
+            })
+
+    except Empleado.DoesNotExist:
+        return Response({'error': 'Empleado no existe'}, status=404)
+
+    except Formulario.DoesNotExist:
+        return Response({'error': 'Formulario no existe'}, status=404)
+
+    except Pregunta.DoesNotExist:
+        return Response({'error': 'Pregunta inválida'}, status=404)
+
+    except Opcion.DoesNotExist:
+        return Response({'error': 'Opción inválida'}, status=404)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def obtener_encuesta_completa(request, idempleado, idformulario):
+
+    fr = FormularioRespuesta.objects.filter(
+        idformulario_id=idformulario,
+        idempleado_id=idempleado
+    ).order_by('-fecha_respuesta').first()  # 🔥 SOLO LA ÚLTIMA
+
+    if not fr:
+        return Response([])
+
+    respuestas = Respuesta.objects.filter(
+        idformulariorespuesta=fr
+    ).select_related('idopcion', 'idpregunta')
+
+    data = []
+
+    for r in respuestas:
+        data.append({
+            "idpregunta": r.idpregunta.idpregunta,
+            "respuesta_texto": r.respuesta_texto,
+            "idopcion": r.idopcion.idopcion if r.idopcion else None
+        })
+
+    return Response(data)
+
+#######################################################################
+#Registro de enfermedades
+@api_view(['POST'])
+def guardar_registro_enfermedades(request):
+
+    try:
+        with transaction.atomic():
+
+            idempleado = request.data.get('idempleado')
+            enfermedades = request.data.get('enfermedades', [])
+
+            empleado = Empleado.objects.get(idempleado=idempleado)
+
+            registro = RegistroEnfermedades.objects.create(
+                idempleado=empleado,
+                alergias=request.data.get('alergias', False),
+                alergias_detalle=request.data.get('alergias_detalle', ''),
+                operaciones=request.data.get('operaciones', False),
+                operaciones_detalle=request.data.get('operaciones_detalle', ''),
+                otras_enfermedades=request.data.get('otras', False),
+                otras_detalle=request.data.get('otras_detalle', '')
+            )
+
+            for e in enfermedades:
+                EnfermedadDetalle.objects.create(
+                    registro=registro,
+                    nombre=e.get('nombre'),
+                    tiene=e.get('tiene'),
+                    tiempo=e.get('tiempo'),
+                    tratamiento=e.get('tratamiento')
+                )
+
+            return Response({"mensaje": "Guardado correctamente"})
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+@api_view(['GET'])
+def obtener_registro_enfermedades(request, idempleado):
+    try:
+        año_actual = datetime.now().year
+
+        registro = RegistroEnfermedades.objects.filter(
+            idempleado=idempleado,
+            fecha__year=año_actual
+        ).order_by('-fecha').first()
+
+        if not registro:
+            return Response({"mensaje": "Sin registros"})
+
+        detalles = EnfermedadDetalle.objects.filter(registro=registro)
+
+        return Response({
+            "alergias": registro.alergias,
+            "alergias_detalle": registro.alergias_detalle,
+            "operaciones": registro.operaciones,
+            "operaciones_detalle": registro.operaciones_detalle,
+            "otras": registro.otras_enfermedades,
+            "otras_detalle": registro.otras_detalle,
+            "enfermedades": [
+                {
+                    "nombre": d.nombre,
+                    "tiene": d.tiene,
+                    "tiempo": d.tiempo,
+                    "tratamiento": d.tratamiento
+                }
+                for d in detalles
+            ]
+        })
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    
+@api_view(['GET'])
+def estadisticas_enfermedades(request):
+
+    genero = request.query_params.get('genero')
+
+    queryset = EnfermedadDetalle.objects.filter(
+        tiene=True
+    )
+
+    # 🔥 aplicar filtro SOLO si viene género
+    if genero and genero != "TODOS":
+        queryset = queryset.filter(
+            registro__idempleado__genero__istartswith=genero
+        )
+
+    data = (
+        queryset
+        .values('nombre')
+        .annotate(
+            total=Count('registro__idempleado', distinct=True)
+        )
+        .order_by('-total')
+    )
+
+    return Response(data)
+
+#####################################################################
+#Evaluacion Global
+class EvaluacionGlobalViewSet(viewsets.ModelViewSet):
+    queryset = EvaluacionGlobal.objects.all()
+    serializer_class = EvaluacionGlobalSerializer
+
+################################################################
+#Informes de Capacitacion
+class InformeCapacitacionViewSet(viewsets.ModelViewSet):
+
+    queryset = InformeCapacitacion.objects.filter(
+        estado=True
+    ).order_by('-createdat')
+
+    serializer_class = InformeCapacitacionSerializer
+
+    @action(detail=True, methods=['post'], url_path='subir-documento')
+    def subir_documento(self, request, pk=None):
+
+        informe = self.get_object()
+
+        iddocumento = request.data.get('iddocumento')
+
+        if not iddocumento:
+            return Response(
+                {'error': 'iddocumento es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        documento = Documento.objects.filter(
+            pk=iddocumento
+        ).first()
+
+        if not documento:
+            return Response(
+                {'error': 'Documento no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        relacion = InformeCapacitacionDocumento.objects.create(
+            idinformecapacitacion=informe,
+            iddocumento=documento
+        )
+
+        serializer = InformeCapacitacionDocumentoSerializer(relacion)
+
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='documentos')
+    def documentos(self, request, pk=None):
+
+        informe = self.get_object()
+
+        documentos = informe.documentos.filter(
+            estado=True
+        )
+
+        serializer = InformeCapacitacionDocumentoSerializer(
+            documentos,
+            many=True
+        )
+
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='capacitacion/(?P<idcapacitacion>[^/.]+)')
+    def por_capacitacion(self, request, idcapacitacion=None):
+
+        informes = InformeCapacitacion.objects.filter(
+            idempleadocapacitacion__idcapacitacion=idcapacitacion,
+            estado=True
+        )
+
+        serializer = self.get_serializer(
+            informes,
+            many=True
+        )
+
+        return Response(serializer.data)
+    
+class InformeCapacitacionDocumentoViewSet(viewsets.ModelViewSet):
+    queryset = InformeCapacitacionDocumento.objects.all()
+    serializer_class = InformeCapacitacionDocumentoSerializer

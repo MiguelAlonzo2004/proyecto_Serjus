@@ -85,7 +85,7 @@ class Capacitacion(models.Model):
     fechafin = models.DateField(db_column='fechaFin')  # Field name made lowercase.
     institucionfacilitadora = models.CharField(db_column='institucionFacilitadora', max_length=150)  # Field name made lowercase.
     montoejecutado = models.DecimalField(db_column='montoEjecutado', max_digits=10, decimal_places=2)  # Field name made lowercase.
-    observacion = models.CharField(max_length=150, null=True, blank=True) 
+    observacion = models.TextField(null=True, blank=True)
     idestado = models.ForeignKey( 'Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True, related_name='convocatorias')
     estado = models.BooleanField(default=True)  # This field type is a guess.
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
@@ -300,7 +300,7 @@ class Evaluacion(models.Model):
     modalidad = models.CharField(db_column='modalidad', max_length=20, blank=True, null=True)
     fechaevaluacion = models.DateTimeField(db_column='fechaEvaluacion')
     puntajetotal = models.DecimalField(db_column='puntajeTotal', max_digits=10, decimal_places=2)
-    observacion = models.CharField(db_column='observacion', max_length=150)
+    observacion = models.CharField(db_column='observacion', max_length=250)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -315,7 +315,7 @@ class Evaluacion(models.Model):
 class Evaluacioncriterio(models.Model):
     idevaluacioncriterio = models.AutoField(db_column='idEvaluacionCriterio', primary_key=True)
     puntajecriterio = models.DecimalField(db_column='puntajeCriterio', max_digits=10, decimal_places=2)
-    observacion = models.CharField(db_column='observacion', max_length=100, blank=True, null=True)
+    observacion = models.CharField(db_column='observacion', max_length=250, blank=True, null=True)
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
     idpostulacion = models.ForeignKey('Postulacion', models.DO_NOTHING, db_column='idPostulacion', blank=True, null=True)
@@ -336,7 +336,7 @@ class Historialpuesto(models.Model): #YA
     fechainicio = models.DateField(db_column='fechaInicio')  # Field name made lowercase.
     fechafin = models.DateField(db_column='fechaFin', blank=True, null=True)  # Field name made lowercase.
     salario = models.DecimalField(max_digits=10, decimal_places=2)
-    observacion = models.CharField(max_length=150)
+    observacion = models.CharField(max_length=250)
     estado = models.BooleanField(default=True)  # This field type is a guess.
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
@@ -399,7 +399,7 @@ class Postulacion(models.Model):
         'Estado', models.DO_NOTHING, db_column='idEstado', blank=True, null=True
     ) 
     estado = models.BooleanField(default=True)
-    observacion = models.CharField(max_length=150)
+    observacion = models.CharField(max_length=250)
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
     createdat = models.DateTimeField(db_column='createdAt', auto_now_add=True)
     updatedat = models.DateTimeField(db_column='updatedAt', auto_now=True)  # Field name made lowercase.
@@ -487,7 +487,7 @@ class Terminacionlaboral(models.Model): #YA
     tipoterminacion = models.CharField(db_column='tipoTerminacion', max_length=20)  # Field name made lowercase.
     fechaterminacion = models.DateField(db_column='fechaTerminacion')  # Field name made lowercase.
     causa = models.CharField(max_length=150, blank=True, null=True)
-    observacion = models.CharField(max_length=150)
+    observacion = models.CharField(max_length=250)
     iddocumento = models.IntegerField(db_column='idDocumento')  # Field name made lowercase.
     estado = models.BooleanField(default=True)  # This field type is a guess.
     idusuario = models.IntegerField(db_column='idUsuario')  # Field name made lowercase.
@@ -563,14 +563,30 @@ class Variable(models.Model):
 ################################################################################
 #Induccion Formulario
 class Formulario(models.Model):
+
+    TIPO_FORMULARIO = (
+        ('induccion', 'Inducción'),
+        ('medico', 'Médico'),
+    )
+
     idformulario = models.AutoField(db_column='idFormulario', primary_key=True)
+
     idinduccion = models.ForeignKey(
         Induccion, models.DO_NOTHING, db_column='idInduccion', blank=True, null=True
     )
+
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True, null=True)
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_FORMULARIO,
+        default='induccion'
+    )
+
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
+
     createdat = models.DateTimeField(auto_now_add=True)
     updatedat = models.DateTimeField(auto_now=True)
 
@@ -591,6 +607,13 @@ class Pregunta(models.Model):
     orden = models.IntegerField()  # para ordenarlas
     estado = models.BooleanField(default=True)
     idusuario = models.IntegerField(db_column='idUsuario')
+    iddimension = models.ForeignKey(
+        'Dimension',
+        models.DO_NOTHING,
+        db_column='idDimension',
+        blank=True,
+        null=True
+    )
     createdat = models.DateTimeField(auto_now_add=True)
     updatedat = models.DateTimeField(auto_now=True)
 
@@ -640,7 +663,6 @@ class FormularioRespuesta(models.Model):
     class Meta:
         managed = True
         db_table = 'formulario_respuesta'
-        unique_together = ('idformulario', 'idempleado')
 
 class Respuesta(models.Model):
     idrespuesta = models.AutoField(db_column='idRespuesta', primary_key=True)
@@ -668,3 +690,199 @@ class Respuesta(models.Model):
     class Meta:
         managed = True
         db_table = 'respuesta'
+
+################################################################
+#Ficha Medica
+class Dimension(models.Model):
+    iddimension = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100)  # CUELLO, HOMBRO...
+    estado = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'dimension'
+
+class FichaMedica(models.Model):
+    idficha = models.AutoField(primary_key=True)
+
+    idempleado = models.ForeignKey(
+        Empleado,
+        on_delete=models.CASCADE,
+        db_column='idEmpleado',
+        related_name='fichas_medicas'
+    )
+
+    peso = models.DecimalField(max_digits=5, decimal_places=2)  # kg
+    estatura = models.DecimalField(max_digits=4, decimal_places=2)  # metros
+
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    estado = models.BooleanField(default=True)
+
+    class Meta:
+        managed = True
+        db_table = 'ficha_medica'
+
+##############################################################
+#Registro de enfermedades
+class RegistroEnfermedades(models.Model):
+    idempleado = models.ForeignKey(Empleado, on_delete=models.CASCADE)
+    fecha = models.DateField(auto_now_add=True)
+
+    alergias = models.BooleanField(default=False)
+    alergias_detalle = models.TextField(blank=True)
+
+    operaciones = models.BooleanField(default=False)
+    operaciones_detalle = models.TextField(blank=True)
+
+    otras_enfermedades = models.BooleanField(default=False)
+    otras_detalle = models.TextField(blank=True)
+
+class EnfermedadDetalle(models.Model):
+    registro = models.ForeignKey(RegistroEnfermedades, on_delete=models.CASCADE)
+    nombre = models.CharField(max_length=255)
+    tiene = models.BooleanField(default=False)
+    tiempo = models.CharField(max_length=50, blank=True)
+    tratamiento = models.TextField(blank=True)
+
+#################################################################################
+#EvaluacionGlobal
+class EvaluacionGlobal(models.Model):
+    idevaluacionglobal = models.AutoField(
+        db_column='idEvaluacionGlobal',
+        primary_key=True
+    )
+
+    idevaluacion = models.ForeignKey(
+        'Evaluacion',
+        models.DO_NOTHING,
+        db_column='idEvaluacion'
+    )
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=(
+            ('AUTO', 'Autoevaluación'),
+            ('COORD', 'Coordinador'),
+        )
+    )
+
+    fortalezas = models.TextField(blank=True, null=True)
+    mejoras = models.TextField(blank=True, null=True)
+    recomendaciones = models.TextField(blank=True, null=True)
+    justificacion = models.TextField(blank=True, null=True)
+
+    decision = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
+    estado = models.BooleanField(default=True)
+    idusuario = models.IntegerField(db_column='idUsuario')
+
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'evaluacion_global'
+
+################################################################
+#Informes de Capacitacione Extra
+class InformeCapacitacion(models.Model):
+    idinformecapacitacion = models.AutoField(
+        db_column='idInformeCapacitacion',
+        primary_key=True
+    )
+
+    idempleadocapacitacion = models.ForeignKey(
+        'Empleadocapacitacion',
+        models.DO_NOTHING,
+        db_column='idEmpleadoCapacitacion',
+        related_name='informes'
+    )
+
+    # 2. Descripción de la Actividad
+    objetivos = models.TextField(blank=True, null=True)
+    tematicas_contenidos = models.TextField(blank=True, null=True)
+    metodologia = models.TextField(blank=True, null=True)
+    conclusiones = models.TextField(blank=True, null=True)
+
+    # 3. Valoraciones
+    aciertos_dificultades = models.TextField(blank=True, null=True)
+    utilidad_formacion = models.TextField(blank=True, null=True)
+
+    # 4. Resultados obtenidos
+    resultados_institucion = models.TextField(blank=True, null=True)
+    resultados_participante = models.TextField(blank=True, null=True)
+
+    # 5. Seguimiento previsto
+    compromiso_aplicacion = models.TextField(blank=True, null=True)
+    propuesta_seguimiento = models.TextField(blank=True, null=True)
+
+    # Control
+    fecha_entrega = models.DateField(blank=True, null=True)
+
+    ESTADO_INFORME = (
+        ('PENDIENTE', 'Pendiente'),
+        ('ENTREGADO', 'Entregado'),
+        ('REVISADO', 'Revisado'),
+    )
+
+    estado_informe = models.CharField(
+        max_length=20,
+        choices=ESTADO_INFORME,
+        default='PENDIENTE'
+    )
+
+    estado = models.BooleanField(default=True)
+
+    idusuario = models.IntegerField(db_column='idUsuario')
+
+    createdat = models.DateTimeField(
+        db_column='createdAt',
+        auto_now_add=True
+    )
+
+    updatedat = models.DateTimeField(
+        db_column='updatedAt',
+        auto_now=True
+    )
+
+    class Meta:
+        managed = True
+        db_table = 'informecapacitacion'
+
+class InformeCapacitacionDocumento(models.Model):
+    idinformecapacitaciondocumento = models.AutoField(
+        primary_key=True
+    )
+
+    idinformecapacitacion = models.ForeignKey(
+        'InformeCapacitacion',
+        models.DO_NOTHING,
+        db_column='idInformeCapacitacion',
+        related_name='documentos'
+    )
+
+    iddocumento = models.ForeignKey(
+        'Documento',
+        models.DO_NOTHING,
+        db_column='idDocumento'
+    )
+
+    estado = models.BooleanField(default=True)
+
+    createdat = models.DateTimeField(auto_now_add=True)
+    updatedat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'informecapacitaciondocumento'

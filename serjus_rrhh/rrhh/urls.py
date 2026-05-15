@@ -14,8 +14,8 @@ from .viewspersonalizadas import  login_usuario
 
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import FormularioViewSet, FormularioRespuestaViewSet, PreguntaViewSet, OpcionViewSet, InduccionFormularioViewSet
-from .views import respuestas_por_induccion, detalle_respuesta, mi_respuesta, evaluacion_periodo_prueba
+from .views import FormularioViewSet, FormularioRespuestaViewSet, PreguntaViewSet, OpcionViewSet, InduccionFormularioViewSet, EvaluacionGlobalViewSet
+from .views import respuestas_por_induccion, detalle_respuesta, mi_respuesta, InformeCapacitacionViewSet, InformeCapacitacionDocumentoViewSet
 
 router = routers.DefaultRouter()
 router.register(r'criterio', CriterioViewSet)
@@ -57,6 +57,26 @@ router.register(r'opciones', OpcionViewSet)
 router.register(r'induccion-formulario', InduccionFormularioViewSet)
 
 ##################################################################
+#Evaluacion global
+router.register(r'evaluacion-global', EvaluacionGlobalViewSet)
+
+##################################################################
+#Capacitaciones externas
+router.register(
+    r'informes-capacitacion',
+    InformeCapacitacionViewSet,
+    basename='informes-capacitacion'
+)
+
+router.register(
+    r'informecapacitaciondocumento',
+    InformeCapacitacionDocumentoViewSet
+)
+
+##########################################################################
+#path's Custom
+from .views import guardar_ficha_medica, ultima_ficha, guardar_encuesta_completa, obtener_encuesta_completa, guardar_registro_enfermedades, obtener_registro_enfermedades
+from .views import estadisticas_enfermedades, obtener_evaluacion_periodo_prueba_acompanantes, obtener_evaluacion_periodo_prueba_coordinacion
 
 urlpatterns = [
     path('', include(router.urls)),  
@@ -66,7 +86,15 @@ urlpatterns = [
     path('respuestas-induccion/<int:idinduccion>/', respuestas_por_induccion),
     path('detalle-respuesta/<int:idformulariorespuesta>/', detalle_respuesta),
     path('mi-respuesta/<int:idinduccion>/<int:idempleado>/', mi_respuesta),
-    path('evaluacion-periodo-prueba/', evaluacion_periodo_prueba)
+    path('evaluacion-periodo-prueba-acompanantes', obtener_evaluacion_periodo_prueba_acompanantes),
+    path('evaluacion-periodo-prueba-coordinacion',obtener_evaluacion_periodo_prueba_coordinacion),
+    path('ficha-medica/', guardar_ficha_medica),
+    path('ficha-medica/<int:idempleado>/', ultima_ficha),
+    path('encuesta-completa/', guardar_encuesta_completa),
+    path('encuesta-completa/<int:idempleado>/<int:idformulario>/', obtener_encuesta_completa),
+    path('registro-enfermedades/', guardar_registro_enfermedades),
+    path('registro-enfermedades/<int:idempleado>/', obtener_registro_enfermedades),
+    path('estadisticas-enfermedades/', estadisticas_enfermedades),
 ]
 
 if settings.DEBUG:
